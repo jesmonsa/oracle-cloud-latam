@@ -1,0 +1,177 @@
+# ============================================================================
+# OCI Resource Manager - Schema for CRUD API
+# ============================================================================
+
+title: "OCI Functions - REST API CRUD con Autonomous Database"
+
+description: |
+  Arquitectura serverless empresarial con:
+  - REST API CRUD completo (GET, POST, PUT, DELETE)
+  - OCI Functions escalables (Node.js o Python)
+  - Autonomous Database Always-Free (20 GB)
+  - Backups automáticos y disaster recovery
+  - Costo total: USD 3.70/mes
+
+informational_items:
+  - name: "adb_always_free"
+    type: "html"
+    pre_content: |
+      <h3>Autonomous Database Always Free</h3>
+      <ul>
+        <li><strong>Storage:</strong> Hasta 20 GB</li>
+        <li><strong>Compute:</strong> Hasta 1 OCPU</li>
+        <li><strong>Backups:</strong> Automáticos, retenidos 30 días</li>
+        <li><strong>Costo:</strong> USD 0.00 (siempre gratis)</li>
+      </ul>
+
+variables:
+  # Compartment
+  compartment_ocid:
+    type: oci:identity:compartment:id
+    required: true
+    title: "Compartment"
+
+  region:
+    type: oci:identity:region:name
+    required: true
+    title: "Región OCI"
+
+  # Application
+  app_name:
+    type: string
+    required: true
+    title: "Nombre de Aplicación"
+    default: "crud-api"
+    minLength: 3
+    maxLength: 20
+
+  environment:
+    type: enum
+    required: true
+    title: "Entorno"
+    default: "dev"
+    enum:
+      - "dev"
+      - "test"
+      - "prod"
+
+  # Database
+  database_admin_password:
+    type: password
+    required: true
+    title: "Contraseña Admin BD"
+    description: "Mínimo 12 caracteres, mayúsculas, minúsculas, números"
+    minLength: 12
+
+  database_version:
+    type: enum
+    required: false
+    title: "Versión Autonomous Database"
+    default: "21c"
+    enum:
+      - "19c"
+      - "21c"
+      - "23c"
+
+  database_workload_type:
+    type: enum
+    required: false
+    title: "Tipo de Carga"
+    default: "OLTP"
+    enum:
+      - "OLTP"
+      - "DW"
+
+  database_storage_gb:
+    type: integer
+    required: false
+    title: "Storage de BD (GB)"
+    default: 20
+    minimum: 20
+    maximum: 20
+
+  database_cpu_count:
+    type: integer
+    required: false
+    title: "OCPUs"
+    default: 1
+    minimum: 1
+    maximum: 1
+
+  # Functions
+  function_memory:
+    type: enum
+    required: false
+    title: "Memoria Función (MB)"
+    default: "256"
+    enum:
+      - "128"
+      - "256"
+      - "512"
+      - "1024"
+      - "2048"
+
+  function_timeout:
+    type: integer
+    required: false
+    title: "Timeout (segundos)"
+    default: 60
+    minimum: 1
+    maximum: 300
+
+  # API
+  api_stage:
+    type: string
+    required: false
+    title: "API Stage"
+    default: "prod"
+
+  rate_limit_requests_per_minute:
+    type: integer
+    required: false
+    title: "Rate Limit (req/min)"
+    default: 100
+    minimum: 10
+    maximum: 10000
+
+  # Backup
+  enable_auto_backup:
+    type: boolean
+    required: false
+    title: "Backups Automáticos"
+    default: true
+
+  backup_retention_days:
+    type: integer
+    required: false
+    title: "Retención Backups (días)"
+    default: 30
+    minimum: 1
+    maximum: 60
+
+  # Monitoring
+  enable_monitoring:
+    type: boolean
+    required: false
+    title: "Habilitar Monitoreo"
+    default: true
+
+  enable_detailed_logs:
+    type: boolean
+    required: false
+    title: "Logs Detallados"
+    default: true
+
+outputGroups:
+  - title: "API Endpoints"
+    outputs:
+      - api_endpoint
+
+  - title: "Database"
+    outputs:
+      - database_id
+      - database_connection_string
+
+  - title: "Functions"
+    outputs:
+      - application_id
