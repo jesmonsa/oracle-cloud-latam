@@ -1,0 +1,23 @@
+---
+name: "OCI NoSQL Database"
+version: "1.0.0"
+description: "High-throughput key-value storage"
+provider: "OCI"
+category: "Database"
+tags: ["database", "nosql", "key-value", "high-throughput"]
+
+capacity_modes:
+  - name: "ON_DEMAND"
+    cost_model: "Pay-per-use (USD 0.00028/1K reads, USD 0.0014/1K writes)"
+    best_for: "Variable, unpredictable workloads"
+    
+  - name: "FIXED"
+    cost_model: "Provisioned capacity (USD ~150-300/mes)"
+    best_for: "Predictable, steady-state workloads"
+
+cost_estimation:
+  on_demand_read_per_1k: "USD 0.00028"
+  on_demand_write_per_1k: "USD 0.0014"
+  storage_per_gb_monthly: "USD 0.004"
+  monthly_estimate_low: "USD 0.50"
+  monthly_estimate_high: "USD 300+"
