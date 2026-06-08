@@ -1,4 +1,4 @@
-# ─── Autenticación OCI ────────────────────────────────────────────────────────
+# ─── Autenticación OCI ───────────────────────────────────────────────────────
 tenancy_ocid      = "<tu_tenancy_ocid>"
 current_user_ocid = "<tu_user_ocid>"
 fingerprint       = "<tu_fingerprint>"

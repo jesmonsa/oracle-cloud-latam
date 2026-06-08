@@ -22,7 +22,7 @@ module "red" {
   habilitar_service_gateway = true
 }
 
-# ─── Seguridad: Network Security Groups ─────────────────────────────────────
+# ─── Seguridad: Network Security Groups ───────────────────────────────────
 module "nsgs" {
   source             = "../../modulos/seguridad/nsg"
   count              = var.habilitar_nsg ? 1 : 0
@@ -37,7 +37,7 @@ module "nsgs" {
   tags               = local.tags_comunes
 }
 
-# ─── Security Lists ─────────────────────────────────────────────────────────
+# ─── Security Lists ───────────────────────────────────────────────────────
 resource "oci_core_security_list" "sl_vacia" {
   count          = var.habilitar_nsg ? 1 : 0
   compartment_id = var.compartment_ocid
@@ -148,7 +148,7 @@ resource "oci_core_security_list" "sl_lb" {
   }
 }
 
-# ─── Subnets Privadas (Webservers + Mount Target) ──────────────────────────
+# ─── Subnets Privadas (Webservers + Mount Target) ──────────────────────
 resource "oci_core_subnet" "privada_ad1" {
   compartment_id             = var.compartment_ocid
   vcn_id                     = module.red.vcn_id
@@ -185,7 +185,7 @@ resource "oci_core_subnet" "privada_ad2" {
   )
 }
 
-# ─── Subnet Pública para Load Balancer ──────────────────────────────────────
+# ─── Subnet Pública para Load Balancer ────────────────────────────────────
 resource "oci_core_subnet" "lb" {
   compartment_id = var.compartment_ocid
   vcn_id         = module.red.vcn_id
@@ -213,7 +213,7 @@ module "filesystem" {
   tags                = local.tags_comunes
 }
 
-# ─── Webserver 1 (AD1 - Privado + NFS mount) ───────────────────────────────
+# ─── Webserver 1 (AD1 - Privado + NFS mount) ─────────────────────────────
 module "webserver_ad1" {
   source              = "../../modulos/computo/webserver"
   compartment_id      = var.compartment_ocid
@@ -234,7 +234,7 @@ module "webserver_ad1" {
   userdata_extra      = local.nfs_mount_script
 }
 
-# ─── Webserver 2 (AD2 - Privado + NFS mount) ───────────────────────────────
+# ─── Webserver 2 (AD2 - Privado + NFS mount) ─────────────────────────────
 module "webserver_ad2" {
   source              = "../../modulos/computo/webserver"
   compartment_id      = var.compartment_ocid
@@ -273,7 +273,7 @@ module "load_balancer" {
   protocolo          = "HTTP"
 }
 
-# ─── Bastion Service ────────────────────────────────────────────────────────
+# ─── Bastion Service ───────────────────────────────────────────────────────
 module "bastion" {
   source                     = "../../modulos/red/bastion-service"
   compartment_id             = var.compartment_ocid

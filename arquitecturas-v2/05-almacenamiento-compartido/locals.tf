@@ -33,10 +33,10 @@ locals {
   # Esto evita problemas de SELinux con paths fuera del document root
   nfs_mount_script = <<-SCRIPT
 
-# ╔══════════════════════════════════════════════════════════════════╗
+# ╔════════════════════════════════════════════════════════════════╗
 # ║  NFS Mount - File Storage Service v2                            ║
 # ║  Monta directamente en /var/www/html/shared (sin symlinks)     ║
-# ╚══════════════════════════════════════════════════════════════════╝
+# ╚════════════════════════════════════════════════════════════════╝
 echo "[$(date)] === Configurando NFS mount ==="
 
 # Paso 1: SELinux - permitir Apache acceder NFS (ANTES de montar)
