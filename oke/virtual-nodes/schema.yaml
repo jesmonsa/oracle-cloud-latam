@@ -1,0 +1,289 @@
+---
+# ╔══════════════════════════════════════════════════════════════════════════════╗
+# ║  Schema de Validación - OKE Virtual Nodes (Serverless)                      ║
+# ║  Define estructura de entrada y validaciones de variables                    ║
+# ╚══════════════════════════════════════════════════════════════════════════════╝
+
+schemaVersion: "2.0"
+title: "Arquitectura OKE Virtual Nodes (Serverless)"
+description: "Cluster Kubernetes con pods sin gestión de infraestructura subyacente"
+
+inputs:
+  # ┌────────────────────────────────────────────────────────────────────────────┐
+  # │ SECCIÓN: Autenticación OCI                                                │
+  # └────────────────────────────────────────────────────────────────────────────┘
+  - name: "tenancy_ocid"
+    type: "string"
+    required: true
+    description: "OCID del Tenancy"
+    sensitive: true
+    pattern: "^ocid1\\.tenancy\\."
+
+  - name: "current_user_ocid"
+    type: "string"
+    required: true
+    description: "OCID del usuario IAM"
+    sensitive: true
+    pattern: "^ocid1\\.user\\."
+
+  - name: "fingerprint"
+    type: "string"
+    required: true
+    description: "Fingerprint de clave API"
+    sensitive: true
+    pattern: "^([A-F0-9]{2}:){15}[A-F0-9]{2}$"
+
+  - name: "private_key_path"
+    type: "string"
+    required: true
+    description: "Ruta a archivo de clave privada"
+    sensitive: true
+
+  - name: "region"
+    type: "string"
+    required: false
+    default: "sa-santiago-1"
+    description: "Región OCI de despliegue"
+    allowedValues:
+      - "sa-santiago-1"
+      - "sa-sao-paulo-1"
+      - "sa-vinhedo-1"
+
+  # ┌────────────────────────────────────────────────────────────────────────────┐
+  # │ SECCIÓN: Configuración del Cluster OKE ENHANCED                           │
+  # └────────────────────────────────────────────────────────────────────────────┘
+  - name: "cluster_name"
+    type: "string"
+    required: false
+    default: "oke-virtual-nodes-cluster"
+    description: "Nombre del cluster OKE ENHANCED"
+    pattern: "^[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]$"
+
+  - name: "kubernetes_version"
+    type: "string"
+    required: false
+    default: "v1.29"
+    description: "Versión de Kubernetes"
+    allowedValues:
+      - "v1.28"
+      - "v1.29"
+      - "v1.30"
+
+  - name: "cluster_type"
+    type: "string"
+    required: false
+    default: "ENHANCED"
+    description: "Tipo de cluster (ENHANCED requerido para Virtual Nodes)"
+    allowedValues:
+      - "ENHANCED"
+
+  # ┌────────────────────────────────────────────────────────────────────────────┐
+  # │ SECCIÓN: Virtual Node Pool                                                │
+  # └────────────────────────────────────────────────────────────────────────────┘
+  - name: "virtual_node_pool_name"
+    type: "string"
+    required: false
+    default: "pool-virtual-nodes"
+    description: "Nombre del virtual node pool"
+
+  - name: "virtual_node_count"
+    type: "integer"
+    required: false
+    default: 10
+    description: "Número de pods virtuales permitidos simultáneamente"
+    minimum: 1
+    maximum: 1000
+
+  - name: "pod_shape"
+    type: "string"
+    required: false
+    default: "Pod.Standard.E4.Flex"
+    description: "Shape para pods virtuales"
+    allowedValues:
+      - "Pod.Standard.E4.Flex"
+      - "Pod.Standard.E3.Flex"
+
+  - name: "pod_ocpus"
+    type: "number"
+    required: false
+    default: 1
+    description: "OCPUs por pod (granularidad de 0.1)"
+    minimum: 0.1
+    maximum: 64
+
+  - name: "pod_memory_gb"
+    type: "number"
+    required: false
+    default: 4
+    description: "Memoria en GB por pod"
+    minimum: 0.5
+    maximum: 1024
+
+  - name: "enable_pod_eviction_policy"
+    type: "boolean"
+    required: false
+    default: true
+    description: "Habilitar evicción automática de pods"
+
+  - name: "pod_eviction_grace_duration_seconds"
+    type: "integer"
+    required: false
+    default: 30
+    description: "Tiempo de gracia antes de evictar un pod"
+    minimum: 0
+    maximum: 3600
+
+  # ┌────────────────────────────────────────────────────────────────────────────┐
+  # │ SECCIÓN: Configuración de VCN                                             │
+  # └────────────────────────────────────────────────────────────────────────────┘
+  - name: "vcn_name"
+    type: "string"
+    required: false
+    default: "vcn-oke-virtual-nodes"
+    description: "Nombre de la VCN"
+
+  - name: "vcn_cidr_block"
+    type: "string"
+    required: false
+    default: "10.0.0.0/16"
+    description: "Bloque CIDR de la VCN"
+    pattern: "^([0-9]{1,3}\\.){3}[0-9]{1,3}/[0-9]{1,2}$"
+
+  - name: "subnet_cidr_block"
+    type: "string"
+    required: false
+    default: "10.0.1.0/24"
+    description: "Bloque CIDR de la subnet"
+    pattern: "^([0-9]{1,3}\\.){3}[0-9]{1,3}/[0-9]{1,2}$"
+
+  # ┌────────────────────────────────────────────────────────────────────────────┐
+  # │ SECCIÓN: Container Instances                                              │
+  # └────────────────────────────────────────────────────────────────────────────┘
+  - name: "container_instances_compartment_id"
+    type: "string"
+    required: true
+    description: "OCID del compartment para Container Instances"
+    sensitive: true
+    pattern: "^ocid1\\.compartment\\."
+
+  - name: "enable_container_logging"
+    type: "boolean"
+    required: false
+    default: true
+    description: "Habilitar logging de Container Instances"
+
+  # ┌────────────────────────────────────────────────────────────────────────────┐
+  # │ SECCIÓN: Namespaces                                                       │
+  # └────────────────────────────────────────────────────────────────────────────┘
+  - name: "system_namespace"
+    type: "string"
+    required: false
+    default: "kube-system"
+    description: "Namespace del sistema"
+
+  - name: "app_namespace"
+    type: "string"
+    required: false
+    default: "virtual-workloads"
+    description: "Namespace para aplicaciones en Virtual Nodes"
+    pattern: "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
+
+  # ┌────────────────────────────────────────────────────────────────────────────┐
+  # │ SECCIÓN: Tolerancias y Afinidad                                           │
+  # └────────────────────────────────────────────────────────────────────────────┘
+  - name: "virtual_node_taint_key"
+    type: "string"
+    required: false
+    default: "virtual-node"
+    description: "Clave del taint para Virtual Nodes"
+
+  - name: "virtual_node_taint_value"
+    type: "string"
+    required: false
+    default: "true"
+    description: "Valor del taint para Virtual Nodes"
+
+  - name: "apply_virtual_node_taint"
+    type: "boolean"
+    required: false
+    default: true
+    description: "Aplicar taint automático a Virtual Nodes"
+
+  # ┌────────────────────────────────────────────────────────────────────────────┐
+  # │ SECCIÓN: Etiquetado                                                       │
+  # └────────────────────────────────────────────────────────────────────────────┘
+  - name: "tags"
+    type: "object"
+    required: false
+    description: "Etiquetas OCI aplicadas a todos los recursos"
+    default:
+      ManagedBy: "Terraform"
+      Proyecto: "OKE-VirtualNodes"
+      Serverless: "true"
+
+  - name: "freeform_tags"
+    type: "object"
+    required: false
+    description: "Tags de forma libre"
+    default:
+      FinanceCenter: "Engineering"
+      CostCenter: "Serverless"
+
+  # ┌────────────────────────────────────────────────────────────────────────────┐
+  # │ SECCIÓN: Monitoreo                                                        │
+  # └────────────────────────────────────────────────────────────────────────────┘
+  - name: "enable_monitoring"
+    type: "boolean"
+    required: false
+    default: true
+    description: "Habilitar OCI Monitoring"
+
+  - name: "monitoring_namespace"
+    type: "string"
+    required: false
+    default: "monitoring"
+    description: "Namespace para componentes de monitoring"
+
+outputs:
+  - name: "cluster_id"
+    description: "OCID del cluster OKE ENHANCED"
+
+  - name: "cluster_kubeconfig"
+    description: "Kubeconfig del cluster"
+    sensitive: true
+
+  - name: "virtual_node_pool_id"
+    description: "OCID del virtual node pool"
+
+  - name: "pod_resources"
+    description: "Recursos por pod (OCPUs y memoria)"
+
+  - name: "app_namespace"
+    description: "Namespace de Kubernetes para Virtual Workloads"
+
+  - name: "vcn_id"
+    description: "OCID de la VCN"
+
+validationRules:
+  - condition: "pod_memory_gb >= pod_ocpus * 1"
+    message: "Se recomienda mínimo 1 GB de memoria por OCPU"
+
+  - condition: "virtual_node_count >= 3"
+    message: "Se recomienda mínimo 3 pods para pruebas"
+
+  - condition: "cluster_type == 'ENHANCED'"
+    message: "Los Virtual Nodes requieren cluster tipo ENHANCED"
+
+deploymentConfig:
+  estimatedCost: "low"
+  estimatedTime: "15-20 minutos"
+  prerequisites:
+    - "CLI de OCI instalada"
+    - "Terraform >= 1.5.0"
+    - "Credenciales OCI válidas"
+    - "Región con soporte a Virtual Nodes"
+  benefits:
+    - "Sin gestión de nodos infraestructura"
+    - "Pago por uso (minuto de ejecución)"
+    - "Escalado automático e instantáneo"
+    - "Aislamiento de pods seguro"
