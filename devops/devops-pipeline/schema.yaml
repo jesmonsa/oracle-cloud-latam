@@ -1,0 +1,288 @@
+title: "OCI DevOps Pipeline - Arquitectura CI/CD Completa"
+description: "Despliega un pipeline CI/CD empresarial completo en OCI DevOps con integración a OKE"
+informationTitle: "Información de Despliegue"
+informationDescription: "Complete los campos requeridos para desplegar la arquitectura"
+
+schemaVersion: 1.1.0
+version: "1.0.0"
+
+locale: "es"
+
+groupings:
+  - title: "Configuración OCI"
+    description: "Credenciales y región de OCI"
+    visible: true
+    variables:
+      - tenancy_ocid
+      - user_ocid
+      - fingerprint
+      - private_key_path
+      - region
+      - compartment_id
+
+  - title: "Información del Proyecto"
+    description: "Nombres y ambiente del proyecto"
+    visible: true
+    variables:
+      - project_name
+      - app_name
+      - environment
+
+  - title: "Configuración de Kubernetes"
+    description: "Cluster OKE existente"
+    visible: true
+    variables:
+      - oke_cluster_name
+      - oke_cluster_id
+
+  - title: "Configuración del Pipeline"
+    description: "Opciones de build y despliegue"
+    visible: true
+    variables:
+      - repository_branch
+      - container_repository_name
+      - build_run_memory
+
+  - title: "Notificaciones y Monitoreo"
+    description: "Configuración de alertas y observabilidad"
+    visible: true
+    variables:
+      - enable_notifications
+      - notification_topic_endpoint
+      - enable_monitoring
+      - cost_tracking_enabled
+
+  - title: "Artifact Registry"
+    description: "Repositorios de artefactos Maven y NPM"
+    visible: true
+    variables:
+      - enable_artifact_registry
+      - artifact_repository_names
+
+  - title: "Logging"
+    description: "Configuración de agregación de logs"
+    visible: true
+    variables:
+      - enable_log_aggregation
+      - log_retention_days
+
+  - title: "Tags"
+    description: "Tags para identificar recursos"
+    visible: false
+    variables:
+      - tags
+
+variables:
+  tenancy_ocid:
+    type: string
+    title: "Tenancy OCID"
+    description: "OCID del tenancy de OCI"
+    required: true
+
+  user_ocid:
+    type: string
+    title: "User OCID"
+    description: "OCID del usuario de OCI"
+    required: true
+
+  fingerprint:
+    type: string
+    title: "API Fingerprint"
+    description: "Fingerprint de la clave pública"
+    required: true
+
+  private_key_path:
+    type: string
+    title: "Private Key Path"
+    description: "Ruta a la clave privada"
+    default: "~/.oci/oci_api_key.pem"
+    required: true
+
+  region:
+    type: enum
+    title: "Región OCI"
+    description: "Región donde desplegar los recursos"
+    enum:
+      - "us-phoenix-1"
+      - "us-ashburn-1"
+      - "eu-frankfurt-1"
+      - "uk-london-1"
+      - "ap-singapore-1"
+      - "ap-sydney-1"
+    default: "us-phoenix-1"
+    required: true
+
+  compartment_id:
+    type: string
+    title: "Compartment OCID"
+    description: "OCID del compartment donde desplegar"
+    required: true
+
+  project_name:
+    type: string
+    title: "Nombre del Proyecto"
+    description: "Nombre único del proyecto (solo caracteres alfanuméricos y guiones)"
+    minLength: 1
+    maxLength: 30
+    required: true
+
+  app_name:
+    type: string
+    title: "Nombre de la Aplicación"
+    description: "Nombre de la aplicación a desplegar"
+    minLength: 1
+    maxLength: 20
+    required: true
+
+  environment:
+    type: enum
+    title: "Ambiente"
+    description: "Ambiente de despliegue"
+    enum:
+      - "dev"
+      - "staging"
+      - "prod"
+    default: "dev"
+    required: true
+
+  oke_cluster_name:
+    type: string
+    title: "Nombre del Cluster OKE"
+    description: "Nombre del cluster Kubernetes existente"
+    required: true
+
+  oke_cluster_id:
+    type: string
+    title: "OKE Cluster OCID"
+    description: "OCID del cluster OKE existente"
+    required: true
+
+  repository_branch:
+    type: string
+    title: "Rama del Repositorio"
+    description: "Rama que disparará el pipeline en cambios"
+    default: "main"
+    required: false
+
+  container_repository_name:
+    type: string
+    title: "Nombre del Repositorio de Contenedores"
+    description: "Nombre para el repositorio en Container Registry (ej: my-app/backend)"
+    required: false
+
+  build_run_memory:
+    type: number
+    title: "Memoria para Builds (MB)"
+    description: "Memoria asignada a cada ejecución de build"
+    minimum: 512
+    maximum: 16384
+    default: 2048
+    required: false
+
+  enable_notifications:
+    type: boolean
+    title: "Habilitar Notificaciones"
+    description: "Enviar notificaciones de pipeline a Slack o Email"
+    default: true
+    required: false
+
+  notification_topic_endpoint:
+    type: string
+    title: "Endpoint para Notificaciones"
+    description: "URL de webhook para Slack, Email, u otro servicio"
+    required: false
+
+  enable_monitoring:
+    type: boolean
+    title: "Habilitar Monitoreo"
+    description: "Integrar OCI Monitoring para métricas y dashboards"
+    default: true
+    required: false
+
+  cost_tracking_enabled:
+    type: boolean
+    title: "Rastreo de Costos"
+    description: "Habilitar alertas de costos anómalos"
+    default: true
+    required: false
+
+  enable_artifact_registry:
+    type: boolean
+    title: "Habilitar Artifact Registry"
+    description: "Crear repositorios de artefactos Maven y NPM"
+    default: true
+    required: false
+
+  artifact_repository_names:
+    type: array
+    items:
+      type: string
+    title: "Nombres de Repositorios de Artefactos"
+    description: "Repositorios a crear en Artifact Registry"
+    default:
+      - "maven-releases"
+      - "maven-snapshots"
+      - "npm-packages"
+    required: false
+
+  enable_log_aggregation:
+    type: boolean
+    title: "Habilitar Agregación de Logs"
+    description: "Centralizar logs del pipeline en OCI Logging Service"
+    default: true
+    required: false
+
+  log_retention_days:
+    type: number
+    title: "Días de Retención de Logs"
+    description: "Cuántos días retener los logs (1-365)"
+    minimum: 1
+    maximum: 365
+    default: 30
+    required: false
+
+  tags:
+    type: map
+    title: "Tags"
+    description: "Tags para identificar y agrupar recursos"
+    default:
+      Architecture: "DevOps"
+      Terraform: "true"
+      Purpose: "CI/CD-Pipeline"
+    required: false
+
+outputs:
+  devops_project_id:
+    title: "DevOps Project OCID"
+    type: string
+    visible: true
+
+  build_pipeline_id:
+    title: "Build Pipeline OCID"
+    type: string
+    visible: true
+
+  deploy_pipeline_id:
+    title: "Deploy Pipeline OCID"
+    type: string
+    visible: true
+
+  repository_http_url:
+    title: "Repository HTTP URL"
+    type: string
+    visible: true
+
+  container_registry_url:
+    title: "Container Registry URL"
+    type: string
+    visible: true
+
+  oke_cluster_id:
+    title: "OKE Cluster OCID"
+    type: string
+    visible: true
+
+  devops_access_instructions:
+    title: "Instrucciones de Acceso"
+    type: object
+    visible: true
