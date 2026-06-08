@@ -1,0 +1,90 @@
+title: "16 - Vault + Baselines"
+description: "Despliega una arquitectura de seguridad con Oracle Vault para gestión de secretos, baselines de seguridad y cumplimiento normativo."
+schemaVersion: 1.1.0
+version: "20260411"
+locale: "es"
+
+logoUrl: "https://raw.githubusercontent.com/jesmonsa/oracle-cloud-latam/main/docs/logo.png"
+
+variableGroups:
+  - title: "Información del Tenancy"
+    visible: false
+    variables:
+      - tenancy_ocid
+      - region
+      - current_user_ocid
+      - fingerprint
+      - private_key_path
+
+  - title: "Configuración General"
+    visible: true
+    variables:
+      - compartment_ocid
+      - proyecto
+      - ambiente
+      - propietario
+
+  - title: "Configuración de Red (VCN)"
+    visible: true
+    variables:
+      - vcn_cidr
+      - subnet_privada_cidr
+
+  - title: "Notificaciones y Seguridad"
+    visible: true
+    variables:
+      - email_notificacion
+
+variables:
+  compartment_ocid:
+    type: oci:identity:compartment:id
+    title: "Compartment de Destino"
+    description: "Compartment donde se crearán todos los recursos"
+    required: true
+
+  proyecto:
+    type: string
+    title: "Nombre del Proyecto"
+    description: "Prefijo para todos los recursos. Minúsculas, máx 12 caracteres"
+    default: "vault"
+    required: true
+    pattern: "^[a-z][a-z0-9-]{1,11}$"
+
+  ambiente:
+    type: enum
+    title: "Ambiente de Despliegue"
+    description: "Selecciona el ambiente"
+    enum:
+      - "produccion"
+      - "staging"
+      - "desarrollo"
+    default: "desarrollo"
+    required: true
+
+  propietario:
+    type: string
+    title: "Propietario"
+    description: "E-mail o nombre del responsable"
+    default: "admin"
+    required: true
+
+  vcn_cidr:
+    type: string
+    title: "CIDR de la VCN"
+    description: "Rango de direcciones RFC1918 para la red virtual"
+    default: "10.0.0.0/16"
+    required: true
+
+  subnet_privada_cidr:
+    type: string
+    title: "CIDR de la Subred Privada"
+    description: "Rango dentro de la VCN para la subred privada"
+    default: "10.0.1.0/24"
+    required: true
+
+  email_notificacion:
+    type: string
+    title: "Email para Notificaciones"
+    description: "Correo electrónico para recibir alertas de seguridad"
+    default: "admin@example.com"
+    required: true
