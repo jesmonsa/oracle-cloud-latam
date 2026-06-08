@@ -1,0 +1,167 @@
+# ============================================================================
+# OCI Resource Manager - Schema for Container Functions
+# ============================================================================
+
+title: "OCI Functions - Container-Based"
+
+description: |
+  Arquitectura serverless con funciones basadas en Docker:
+  - Soporte multi-lenguaje (Python, Go, Java, Node.js, C++)
+  - Imágenes Docker personalizadas
+  - ML models pre-entrenados
+  - Dependencias complejas
+  - Almacenamiento en OCIR privado
+  - Costo estimado: USD 3.85/mes
+
+informational_items:
+  - name: "dockerfile_examples"
+    type: "html"
+    pre_content: |
+      <h3>Ejemplos de Dockerfile</h3>
+      <pre>
+# Python con ML
+FROM python:3.11-slim
+RUN pip install tensorflow numpy pandas
+
+# Go
+FROM golang:1.21-alpine
+RUN go build -o func .
+
+# Node.js
+FROM node:20-alpine
+RUN npm install
+      </pre>
+
+variables:
+  # Compartment
+  compartment_ocid:
+    type: oci:identity:compartment:id
+    required: true
+    title: "Compartment"
+
+  region:
+    type: oci:identity:region:name
+    required: true
+    title: "Región OCI"
+
+  # Application
+  app_name:
+    type: string
+    required: true
+    title: "Nombre de Aplicación"
+    default: "container-function"
+    minLength: 3
+    maxLength: 30
+
+  environment:
+    type: enum
+    required: true
+    title: "Entorno"
+    default: "dev"
+    enum:
+      - "dev"
+      - "test"
+      - "prod"
+
+  # Container Image
+  docker_image_url:
+    type: string
+    required: true
+    title: "URL Imagen Docker (OCIR)"
+    description: "Formato: region.ocir.io/namespace/repository:tag"
+    pattern: "^.+\\.ocir\\..+/.+:.+$"
+
+  ocir_namespace:
+    type: string
+    required: true
+    title: "OCIR Namespace"
+    description: "Tu tenancy ID"
+
+  ocir_repository_name:
+    type: string
+    required: false
+    title: "Nombre Repositorio OCIR"
+
+  # Function
+  function_name:
+    type: string
+    required: false
+    title: "Nombre Función"
+    default: "container-func"
+
+  function_memory:
+    type: enum
+    required: false
+    title: "Memoria (MB)"
+    default: "512"
+    enum:
+      - "128"
+      - "256"
+      - "512"
+      - "1024"
+      - "2048"
+
+  function_timeout:
+    type: integer
+    required: false
+    title: "Timeout (segundos)"
+    default: 120
+    minimum: 1
+    maximum: 300
+
+  function_max_concurrent_executions:
+    type: integer
+    required: false
+    title: "Máx Ejecuciones Concurrentes"
+    default: 100
+    minimum: 1
+
+  # API Gateway
+  api_gateway_stage:
+    type: string
+    required: false
+    title: "API Stage"
+    default: "prod"
+
+  api_gateway_enable_metrics:
+    type: boolean
+    required: false
+    title: "Habilitar Métricas API"
+    default: true
+
+  # Monitoring
+  enable_monitoring:
+    type: boolean
+    required: false
+    title: "Habilitar Monitoreo"
+    default: true
+
+  enable_detailed_logs:
+    type: boolean
+    required: false
+    title: "Logs Detallados"
+    default: true
+
+outputGroups:
+  - title: "OCIR Repository"
+    outputs:
+      - ocir_repository_url
+
+  - title: "Functions"
+    outputs:
+      - application_id
+      - function_id
+      - function_invoke_endpoint
+
+  - title: "API Gateway"
+    outputs:
+      - api_endpoint
+
+  - title: "Setup"
+    outputs:
+      - build_and_push_commands
+      - test_invocation_command
+
+  - title: "Costs"
+    outputs:
+      - estimated_monthly_cost
