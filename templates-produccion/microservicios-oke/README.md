@@ -6,7 +6,7 @@ registro de contenedores y monitoreo integrado. Listo para producción.
 ## Servicios OCI
 
 | Servicio | Propósito |
-|----------|-----------|
+|----------|----------|
 | OKE | Cluster Kubernetes gestionado |
 | Load Balancer | Ingress Controller para tráfico externo |
 | OCIR | Registro de imágenes de contenedores |

@@ -6,7 +6,7 @@ base de datos y observabilidad completa. Listo para producción.
 ## Servicios OCI
 
 | Servicio | Propósito |
-|----------|-----------|
+|----------|----------|
 | VCN | Red virtual con subnets públicas y privadas |
 | Load Balancer | Balanceo de tráfico HTTPS con certificado |
 | Compute | Instancias web en múltiples ADs |

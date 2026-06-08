@@ -6,7 +6,7 @@ Data Integration para pipelines de datos empresariales. Listo para producción.
 ## Servicios OCI
 
 | Servicio | Propósito |
-|----------|-----------|
+|----------|----------|
 | ADB | Autonomous Database Serverless |
 | Object Storage | Data Lake para datos crudos y procesados |
 | Data Integration | Pipelines ETL/ELT gestionados |
