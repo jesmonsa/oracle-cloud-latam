@@ -1,0 +1,298 @@
+title: "Terraform Cloud/Enterprise - Gestión de Estado Remoto e IaC Automático"
+description: "Configura Terraform Cloud para gestión remota de infraestructura OCI con State remoto, VCS integration y Policy as Code"
+informationTitle: "Información de Despliegue"
+informationDescription: "Configure los parámetros de Terraform Cloud"
+
+schemaVersion: 1.1.0
+version: "1.0.0"
+
+locale: "es"
+
+groupings:
+  - title: "Configuración OCI"
+    description: "Credenciales y región de OCI"
+    visible: true
+    variables:
+      - tenancy_ocid
+      - user_ocid
+      - fingerprint
+      - private_key_path
+      - region
+      - compartment_id
+
+  - title: "Terraform Cloud"
+    description: "Parámetros de organización y workspace"
+    visible: true
+    variables:
+      - tfc_organization
+      - tfc_token
+      - workspace_name
+      - terraform_version
+
+  - title: "VCS Integration"
+    description: "Conexión con repositorio de código"
+    visible: true
+    variables:
+      - vcs_oauth_token_id
+      - vcs_repository
+      - vcs_branch
+      - enable_vcs_integration
+
+  - title: "Ejecución"
+    description: "Configuración de ejecutión de runs"
+    visible: true
+    variables:
+      - execution_mode
+      - require_approval
+      - enable_auto_apply
+
+  - title: "Features y Seguridad"
+    description: "Habilitar features avanzadas"
+    visible: true
+    variables:
+      - enable_cost_estimation
+      - enable_sentinel_policies
+
+  - title: "Backend OCI"
+    description: "Almacenamiento del estado en OCI"
+    visible: true
+    variables:
+      - create_oci_backend
+      - enable_state_encryption
+      - kms_key_id
+
+  - title: "Monitoreo y Notificaciones"
+    description: "Logging, auditoría y alertas"
+    visible: true
+    variables:
+      - enable_audit_logging
+      - enable_notifications
+      - notification_webhook_url
+
+  - title: "Tags"
+    description: "Tags para identificar recursos"
+    visible: false
+    variables:
+      - tags
+
+variables:
+  tenancy_ocid:
+    type: string
+    title: "Tenancy OCID"
+    description: "OCID del tenancy de OCI"
+    required: true
+
+  user_ocid:
+    type: string
+    title: "User OCID"
+    description: "OCID del usuario de OCI"
+    required: true
+
+  fingerprint:
+    type: string
+    title: "API Fingerprint"
+    description: "Fingerprint de la clave pública"
+    required: true
+
+  private_key_path:
+    type: string
+    title: "Private Key Path"
+    description: "Ruta a la clave privada"
+    default: "~/.oci/oci_api_key.pem"
+    required: true
+
+  region:
+    type: enum
+    title: "Región OCI"
+    description: "Región donde crear recursos"
+    enum:
+      - "us-phoenix-1"
+      - "us-ashburn-1"
+      - "eu-frankfurt-1"
+      - "uk-london-1"
+      - "ap-singapore-1"
+      - "ap-sydney-1"
+    default: "us-phoenix-1"
+    required: true
+
+  compartment_id:
+    type: string
+    title: "Compartment OCID"
+    description: "OCID del compartment"
+    required: true
+
+  tfc_organization:
+    type: string
+    title: "Organización Terraform Cloud"
+    description: "Nombre de la organización (crear en https://app.terraform.io)"
+    required: true
+
+  tfc_token:
+    type: string
+    title: "API Token de Terraform Cloud"
+    description: "Token de API (Settings → Tokens en Terraform Cloud)"
+    required: true
+
+  workspace_name:
+    type: string
+    title: "Nombre del Workspace"
+    description: "Nombre único del workspace"
+    required: true
+
+  terraform_version:
+    type: string
+    title: "Versión de Terraform"
+    description: "Versión a usar en Terraform Cloud"
+    default: "1.5.0"
+    required: false
+
+  vcs_oauth_token_id:
+    type: string
+    title: "VCS OAuth Token ID"
+    description: "ID del token OAuth en Terraform Cloud (Settings → VCS Providers)"
+    required: false
+
+  vcs_repository:
+    type: string
+    title: "Repositorio VCS"
+    description: "Repositorio en formato org/repo"
+    required: false
+
+  vcs_branch:
+    type: string
+    title: "Rama VCS"
+    description: "Rama a monitorear para cambios"
+    default: "main"
+    required: false
+
+  enable_vcs_integration:
+    type: boolean
+    title: "Habilitar VCS Integration"
+    description: "Conectar con GitHub/GitLab para runs automáticos"
+    default: true
+    required: false
+
+  execution_mode:
+    type: enum
+    title: "Modo de Ejecución"
+    description: "Donde ejecutar Terraform (remote o local)"
+    enum:
+      - "remote"
+      - "local"
+      - "agent"
+    default: "remote"
+    required: false
+
+  require_approval:
+    type: boolean
+    title: "Requerir Aprobación"
+    description: "Aprobar antes de aplicar cambios"
+    default: true
+    required: false
+
+  enable_auto_apply:
+    type: boolean
+    title: "Auto Apply"
+    description: "Aplicar automáticamente después de plan"
+    default: false
+    required: false
+
+  enable_cost_estimation:
+    type: boolean
+    title: "Cost Estimation"
+    description: "Estimar costos de cambios"
+    default: true
+    required: false
+
+  enable_sentinel_policies:
+    type: boolean
+    title: "Sentinel Policies"
+    description: "Habilitar Policy as Code"
+    default: true
+    required: false
+
+  create_oci_backend:
+    type: boolean
+    title: "Crear OCI Backend"
+    description: "Crear Object Storage bucket para estado"
+    default: true
+    required: false
+
+  enable_state_encryption:
+    type: boolean
+    title: "Encriptación de State"
+    description: "Encriptar estado con KMS"
+    default: true
+    required: false
+
+  kms_key_id:
+    type: string
+    title: "KMS Key OCID"
+    description: "OCID de clave KMS (dejar vacío para encriptación por defecto)"
+    required: false
+
+  enable_audit_logging:
+    type: boolean
+    title: "Audit Logging"
+    description: "Registrar auditoría de runs"
+    default: true
+    required: false
+
+  enable_notifications:
+    type: boolean
+    title: "Notificaciones"
+    description: "Enviar notificaciones de runs"
+    default: true
+    required: false
+
+  notification_webhook_url:
+    type: string
+    title: "Webhook URL"
+    description: "URL para notificaciones (Slack, etc.)"
+    required: false
+
+  tags:
+    type: map
+    title: "Tags"
+    description: "Tags para identificar recursos"
+    default:
+      Architecture: "Terraform-Cloud"
+      Terraform: "true"
+      Purpose: "IaC-Management"
+    required: false
+
+outputs:
+  tfc_organization_name:
+    title: "Organización Terraform Cloud"
+    type: string
+    visible: true
+
+  tfc_workspace_id:
+    title: "ID del Workspace"
+    type: string
+    visible: true
+
+  terraform_cloud_url:
+    title: "URL de Terraform Cloud"
+    type: string
+    visible: true
+
+  oci_state_bucket_name:
+    title: "Nombre del Bucket de Estado"
+    type: string
+    visible: true
+
+  execution_mode:
+    title: "Modo de Ejecución"
+    type: string
+    visible: true
+
+  terraform_cloud_setup_instructions:
+    title: "Instrucciones de Configuración"
+    type: object
+    visible: true
+
+  workspace_settings:
+    title: "Configuración del Workspace"
+    type: object
+    visible: true
