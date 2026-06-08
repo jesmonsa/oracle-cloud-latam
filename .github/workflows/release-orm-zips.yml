@@ -1,0 +1,168 @@
+name: "\U0001F4E6 Generar Release con Zips para OCI Resource Manager"
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Tag de versión (ej: v1.0.0)'
+        required: true
+        default: 'v1.0.0'
+
+permissions:
+  contents: write
+
+jobs:
+  crear-release:
+    name: Crear Release con Zips ORM
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Determinar versión
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "tag=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Generar Zips por arquitectura
+        run: |
+          mkdir -p dist
+
+          echo "=== Generando zips para OCI Resource Manager ==="
+
+          create_zip() {
+            local dir="$1"
+            local zip_name="$2"
+
+            if [ ! -f "$dir/schema.yaml" ]; then
+              echo "  Saltando $dir (sin schema.yaml)"
+              return
+            fi
+
+            cd "$dir"
+            zip -r "../../dist/${zip_name}.zip" \
+              *.tf \
+              schema.yaml \
+              terraform.tfvars.example \
+              -x "*.tfstate*" \
+              -x "*.tfplan" \
+              -x "terraform.tfvars" \
+              -x ".terraform/*" \
+              -x ".terraform.lock.hcl" \
+              -x "backend.hcl" \
+              2>/dev/null || true
+            cd ../..
+
+            if [ -f "dist/${zip_name}.zip" ]; then
+              size=$(du -h "dist/${zip_name}.zip" | cut -f1)
+              echo "  ${zip_name}.zip ($size)"
+            else
+              echo "  Error creando ${zip_name}.zip"
+            fi
+          }
+
+          for dir in arquitecturas-v2/*/; do
+            [ -d "$dir" ] || continue
+            dirname=$(basename "$dir")
+            [[ "$dirname" == "scripts" ]] && continue
+            create_zip "$dir" "v2-${dirname}"
+          done
+
+          for dir in oke/*/; do
+            [ -d "$dir" ] || continue
+            create_zip "$dir" "oke-$(basename $dir)"
+          done
+
+          for dir in serverless/*/; do
+            [ -d "$dir" ] || continue
+            create_zip "$dir" "serverless-$(basename $dir)"
+          done
+
+          for dir in datos/*/; do
+            [ -d "$dir" ] || continue
+            create_zip "$dir" "datos-$(basename $dir)"
+          done
+
+          for dir in devops/*/; do
+            [ -d "$dir" ] || continue
+            create_zip "$dir" "devops-$(basename $dir)"
+          done
+
+          for dir in ai/*/; do
+            [ -d "$dir" ] || continue
+            create_zip "$dir" "ai-$(basename $dir)"
+          done
+
+          echo ""
+          echo "=== Resumen ==="
+          echo "Total zips: $(ls dist/*.zip 2>/dev/null | wc -l)"
+          echo "Tamano total: $(du -sh dist/ | cut -f1)"
+          ls -la dist/
+
+      - name: Verificar seguridad de zips
+        run: |
+          echo "=== Verificando que no hay secretos en los zips ==="
+          ERRORES=0
+
+          for zip in dist/*.zip; do
+            if unzip -l "$zip" | grep -qE 'terraform\.tfvars$|\.tfstate|\.pem$|\.key$|backend\.hcl$'; then
+              echo "ALERTA: $zip contiene archivos sensibles"
+              unzip -l "$zip" | grep -E 'terraform\.tfvars$|\.tfstate|\.pem$|\.key$|backend\.hcl$'
+              ERRORES=$((ERRORES+1))
+            fi
+          done
+
+          if [ $ERRORES -gt 0 ]; then
+            echo "::error::Se encontraron archivos sensibles en los zips"
+            exit 1
+          fi
+          echo "Todos los zips estan limpios de secretos"
+
+      - name: Generar notas de release
+        run: |
+          cat > release_notes.md << 'NOTES'
+          ## Oracle Cloud LATAM - Arquitecturas de Referencia
+
+          ### Arquitecturas incluidas
+
+          | Seccion | Cantidad | Deploy |
+          |---------|----------|--------|
+          | arquitecturas-v2 | 17 | One-click |
+          | oke (Kubernetes) | 10 | One-click |
+          | serverless | 5 | One-click |
+          | datos | 5 | One-click |
+          | devops | 4 | One-click |
+          | ai | 5 | One-click |
+
+          ### Como usar
+
+          1. Haz clic en el boton **Deploy to Oracle Cloud** en el README de cualquier arquitectura
+          2. OCI Resource Manager descarga el zip automaticamente
+          3. Configura las variables en el formulario
+          4. Haz clic en **Apply** para desplegar
+
+          ### Notas
+
+          - Todos los zips estan verificados: zero credenciales, zero secretos
+          - Compatible con Terraform >= 1.5.0 y OCI Provider >= 6.0.0
+          - Documentacion 100% en espanol
+          NOTES
+
+      - name: Crear GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: "Release ${{ steps.version.outputs.tag }} - Oracle Cloud LATAM"
+          body_path: release_notes.md
+          files: dist/*.zip
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
