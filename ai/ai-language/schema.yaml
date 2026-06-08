@@ -1,0 +1,69 @@
+title: OCI AI Language Service
+description: "Servicio de procesamiento de lenguaje natural (PNL) sin servidor"
+schemaVersion: 1.1.0
+version: 1.0.0
+
+informationItems:
+  - name: Project Name
+    type: string
+    required: true
+    default: "language-platform"
+
+  - name: Environment
+    type: enum
+    enum:
+      - dev
+      - staging
+      - prod
+    default: "dev"
+
+  - name: Region
+    type: oci:identity:region
+    required: true
+    default: "us-phoenix-1"
+
+  - name: Compartment
+    type: oci:identity:compartment
+    required: true
+
+  - name: Enable Sentiment Analysis
+    type: boolean
+    default: true
+
+  - name: Enable Entity Extraction
+    type: boolean
+    default: true
+
+  - name: Enable Classification
+    type: boolean
+    default: true
+
+  - name: Enable Key Phrase Extraction
+    type: boolean
+    default: true
+
+  - name: Supported Languages
+    type: string
+    default: "en,es,pt"
+    description: "Idiomas ISO-639-1 separados por coma"
+
+  - name: Input Bucket Name
+    type: string
+    required: true
+    default: "language-input"
+
+  - name: Results Bucket Name
+    type: string
+    required: true
+    default: "language-results"
+
+outputGroups:
+  - title: "Language Service"
+    outputs:
+      - input_bucket_uri
+      - results_bucket_uri
+      - supported_languages
+
+  - title: "Object Storage"
+    outputs:
+      - object_storage_namespace
