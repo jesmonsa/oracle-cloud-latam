@@ -1,0 +1,149 @@
+title: "01 - Fundamentos: Webserver Simple v2"
+description: "Despliega una VCN y un servidor web Apache con buenas prácticas de seguridad, validación de inputs y estructura enterprise-ready. Base para arquitecturas progresivas en OCI."
+schemaVersion: 1.1.0
+version: "20260410"
+locale: "es"
+
+logoUrl: "https://raw.githubusercontent.com/jesmonsa/oracle-cloud-latam/main/docs/logo.png"
+
+variableGroups:
+  - title: "Información del Tenancy"
+    visible: false
+    variables:
+      - tenancy_ocid
+      - region
+      - current_user_ocid
+      - fingerprint
+      - private_key_path
+
+  - title: "Configuración General"
+    visible: true
+    variables:
+      - compartment_ocid
+      - proyecto
+      - ambiente
+      - propietario
+
+  - title: "Configuración de Red (VCN)"
+    visible: true
+    variables:
+      - vcn_cidr
+      - subnet_publica_cidr
+
+  - title: "Configuración de Cómputo"
+    visible: true
+    variables:
+      - ssh_public_key
+      - shape_webserver
+      - ocpus_webserver
+      - memoria_webserver_gb
+      - imagen_os
+
+  - title: "Seguridad"
+    visible: true
+    variables:
+      - ssh_cidr_permitido
+      - habilitar_nsg
+      - habilitar_baseline_seguridad
+
+variables:
+  compartment_ocid:
+    type: oci:identity:compartment:id
+    title: "Compartment de Destino"
+    description: "Compartment donde se crearán todos los recursos"
+    required: true
+
+  proyecto:
+    type: string
+    title: "Nombre del Proyecto"
+    description: "Prefijo para todos los recursos. Minúsculas, máx 15 caracteres"
+    default: "fundamentos"
+    required: true
+    pattern: "^[a-z][a-z0-9-]{1,14}$"
+
+  ambiente:
+    type: enum
+    title: "Ambiente de Despliegue"
+    description: "Selecciona el ambiente"
+    enum:
+      - "produccion"
+      - "staging"
+      - "desarrollo"
+    default: "desarrollo"
+    required: true
+
+  propietario:
+    type: string
+    title: "Propietario"
+    description: "E-mail o nombre del responsable"
+    default: "admin"
+    required: true
+
+  vcn_cidr:
+    type: string
+    title: "CIDR de la VCN"
+    description: "Rango de direcciones RFC1918 para la red virtual"
+    default: "10.0.0.0/16"
+    required: true
+
+  subnet_publica_cidr:
+    type: string
+    title: "CIDR de la Subred Pública"
+    description: "Rango dentro de la VCN para la subred pública"
+    default: "10.0.1.0/24"
+    required: true
+
+  ssh_public_key:
+    type: string
+    title: "Llave Pública SSH"
+    description: "Pega tu llave pública SSH (ssh-rsa o ssh-ed25519)"
+    required: true
+
+  shape_webserver:
+    type: oci:core:instanceshape:name
+    title: "Shape del Servidor"
+    description: "VM.Standard.E4.Flex es elegible para Always Free Tier"
+    default: "VM.Standard.E4.Flex"
+    required: true
+    dependsOn:
+      compartmentId: compartment_ocid
+
+  ocpus_webserver:
+    type: number
+    title: "OCPUs"
+    description: "1 OCPU = Always Free elegible"
+    default: 1
+    required: true
+
+  memoria_webserver_gb:
+    type: number
+    title: "Memoria RAM (GB)"
+    description: "RAM en GB (ratio válido: 1-64 GB por OCPU)"
+    default: 8
+    required: true
+
+  imagen_os:
+    type: string
+    title: "OCID de Imagen OS (Opcional)"
+    description: "Vacío = última Oracle Linux 8 disponible"
+    default: ""
+    required: false
+
+  ssh_cidr_permitido:
+    type: string
+    title: "CIDR Permitido para SSH"
+    description: "Restringe a tu IP. Ejemplo: 190.27.1.100/32. 0.0.0.0/0 solo para pruebas"
+    default: "0.0.0.0/0"
+    required: true
+
+  habilitar_nsg:
+    type: boolean
+    title: "Usar Network Security Groups"
+    description: "Recomendado: NSG ofrece seguridad más granular"
+    default: true
+
+  habilitar_baseline_seguridad:
+    type: boolean
+    title: "Activar Baseline de Seguridad"
+    description: "Cloud Guard y auditoría. Recomendado para producción"
+    default: false
