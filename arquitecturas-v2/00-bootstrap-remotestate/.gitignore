@@ -1,0 +1,13 @@
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfplan
+
+# Credenciales S3 (NUNCA commitear)
+s3_credentials
+backend.hcl
+
+# OS
+.DS_Store
+Thumbs.db

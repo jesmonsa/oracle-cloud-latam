@@ -1,0 +1,45 @@
+# ─── Terraform ────────────────────────────────────────────────────────────────
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+.terraform.lock.hcl
+crash.log
+crash.*.log
+
+# ─── Variables sensibles ─────────────────────────────────────────────────────
+terraform.tfvars
+*.auto.tfvars
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# ─── Llaves y credenciales ───────────────────────────────────────────────────
+*.pem
+*.key
+*.p12
+*.pfx
+.oci/
+
+# ─── Remote State (S3 credentials) ──────────────────────────────────────────
+s3_credentials
+backend.hcl
+**/s3_credentials
+**/backend.hcl
+
+# ─── Archivos temporales de diagnóstico ─────────────────────────────────────
+*.bat
+*.log
+
+# ─── IDE ──────────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ─── OS ───────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
