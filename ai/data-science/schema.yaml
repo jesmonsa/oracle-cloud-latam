@@ -1,0 +1,116 @@
+title: OCI Data Science Platform
+description: "Plataforma completamente gestionada para ciencia de datos, ML e IA"
+schemaVersion: 1.1.0
+version: 1.0.0
+
+informationItems:
+  - name: Project Name
+    type: string
+    pattern: "^[a-z0-9-]{1,20}$"
+    required: true
+    default: "my-project"
+
+  - name: Environment
+    type: enum
+    enum:
+      - dev
+      - staging
+      - prod
+    required: true
+    default: "dev"
+
+  - name: Region
+    type: oci:identity:region
+    required: true
+    default: "us-phoenix-1"
+
+  - name: Compartment
+    type: oci:identity:compartment
+    required: true
+
+  - name: VCN
+    type: oci:core:vcn
+    required: true
+
+  - name: Subnet
+    type: oci:core:subnet
+    required: true
+    dependsOn:
+      - VCN
+
+  - name: Enable CPU Notebook
+    type: boolean
+    default: true
+    description: "Crear Notebook Session con CPU"
+
+  - name: Notebook Shape
+    type: enum
+    enum:
+      - "VM.Standard.E4.Flex"
+      - "VM.Standard.A1.Flex"
+      - "VM.Standard.E5.Flex"
+    default: "VM.Standard.E4.Flex"
+    visible:
+      - enableCpuNotebook
+
+  - name: Notebook OCPUs
+    type: integer
+    minimum: 1
+    maximum: 64
+    default: 4
+    visible:
+      - enableCpuNotebook
+
+  - name: Notebook Memory (GB)
+    type: integer
+    minimum: 8
+    maximum: 512
+    default: 32
+    visible:
+      - enableCpuNotebook
+
+  - name: Enable GPU Notebook
+    type: boolean
+    default: false
+    description: "Crear Notebook Session con GPU"
+
+  - name: GPU Notebook Shape
+    type: enum
+    enum:
+      - "VM.GPU.A10.1"
+      - "VM.GPU.A10.2"
+      - "VM.GPU.A100.1"
+      - "VM.GPU.A100.2"
+    default: "VM.GPU.A10.1"
+    visible:
+      - enableGpuNotebook
+
+  - name: Enable Jobs
+    type: boolean
+    default: false
+    description: "Crear Data Science Jobs"
+
+  - name: Object Storage Bucket
+    type: string
+    pattern: "^[a-z0-9-]{1,30}$"
+    required: true
+    description: "Nombre del bucket para datos"
+
+outputGroups:
+  - title: "Data Science Platform"
+    outputs:
+      - data_science_project_id
+      - data_science_project_name
+
+  - title: "Notebook Sessions"
+    outputs:
+      - notebook_session_id
+      - notebook_session_url
+      - gpu_notebook_session_id
+      - gpu_notebook_session_url
+
+  - title: "Object Storage"
+    outputs:
+      - object_storage_namespace
+      - object_storage_bucket_name
+      - object_storage_bucket_uri
