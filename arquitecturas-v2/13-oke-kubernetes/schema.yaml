@@ -1,0 +1,167 @@
+title: "13 - OKE: Oracle Kubernetes Engine Completo"
+description: "Despliega un cluster de Kubernetes completamente administrado en Oracle Cloud. Incluye API server, Load Balancer y worker nodes con configuración enterprise."
+schemaVersion: 1.1.0
+version: "20260411"
+locale: "es"
+
+logoUrl: "https://raw.githubusercontent.com/jesmonsa/oracle-cloud-latam/main/docs/logo.png"
+
+variableGroups:
+  - title: "Información del Tenancy"
+    visible: false
+    variables:
+      - tenancy_ocid
+      - region
+      - current_user_ocid
+      - fingerprint
+      - private_key_path
+
+  - title: "Configuración General"
+    visible: true
+    variables:
+      - compartment_ocid
+      - proyecto
+      - ambiente
+      - propietario
+
+  - title: "Configuración de Red (VCN)"
+    visible: true
+    variables:
+      - vcn_cidr
+      - subnet_api_cidr
+      - subnet_lb_cidr
+      - subnet_nodepool_cidr
+      - pods_cidr
+      - services_cidr
+
+  - title: "Configuración de Kubernetes"
+    visible: true
+    variables:
+      - k8s_version
+      - node_pool_size
+      - node_shape
+      - node_ocpus
+      - node_memoria_gb
+
+  - title: "Acceso SSH"
+    visible: true
+    variables:
+      - ssh_public_key
+
+variables:
+  compartment_ocid:
+    type: oci:identity:compartment:id
+    title: "Compartment de Destino"
+    description: "Compartment donde se crearán todos los recursos de Kubernetes"
+    required: true
+
+  proyecto:
+    type: string
+    title: "Nombre del Proyecto"
+    description: "Prefijo para todos los recursos. Minúsculas, máx 12 caracteres"
+    default: "oke"
+    required: true
+    pattern: "^[a-z][a-z0-9-]{1,11}$"
+
+  ambiente:
+    type: enum
+    title: "Ambiente de Despliegue"
+    description: "Selecciona el ambiente"
+    enum:
+      - "produccion"
+      - "staging"
+      - "desarrollo"
+    default: "desarrollo"
+    required: true
+
+  propietario:
+    type: string
+    title: "Propietario"
+    description: "E-mail o nombre del responsable"
+    default: "admin"
+    required: true
+
+  vcn_cidr:
+    type: string
+    title: "CIDR de la VCN"
+    description: "Rango de direcciones RFC1918 para la red virtual"
+    default: "10.0.0.0/16"
+    required: true
+
+  subnet_api_cidr:
+    type: string
+    title: "CIDR de la Subred API"
+    description: "Subred para el API Server de Kubernetes. Mínimo /28"
+    default: "10.0.0.0/28"
+    required: true
+
+  subnet_lb_cidr:
+    type: string
+    title: "CIDR de la Subred Load Balancer"
+    description: "Subred para Load Balancers públicos"
+    default: "10.0.1.0/24"
+    required: true
+
+  subnet_nodepool_cidr:
+    type: string
+    title: "CIDR de la Subred Node Pool"
+    description: "Subred para los worker nodes"
+    default: "10.0.10.0/24"
+    required: true
+
+  pods_cidr:
+    type: string
+    title: "CIDR para Pods"
+    description: "Rango CIDR para las direcciones IP de los pods (cluster network)"
+    default: "10.244.0.0/16"
+    required: true
+
+  services_cidr:
+    type: string
+    title: "CIDR para Servicios"
+    description: "Rango CIDR para los servicios de Kubernetes (cluster IP)"
+    default: "10.96.0.0/16"
+    required: true
+
+  k8s_version:
+    type: string
+    title: "Versión de Kubernetes"
+    description: "Versión de Kubernetes a desplegar. Ej: v1.31.1"
+    default: "v1.31.1"
+    required: true
+
+  node_pool_size:
+    type: number
+    title: "Número de Worker Nodes"
+    description: "Cantidad inicial de nodos trabajadores en el cluster"
+    default: 1
+    required: true
+
+  node_shape:
+    type: oci:core:instanceshape:name
+    title: "Shape de los Worker Nodes"
+    description: "Shape Flex recomendado. VM.Standard.E4.Flex es elegible para Always Free Tier"
+    default: "VM.Standard.E4.Flex"
+    required: true
+    dependsOn:
+      compartmentId: compartment_ocid
+
+  node_ocpus:
+    type: number
+    title: "OCPUs por Worker Node"
+    description: "1 OCPU = Always Free elegible"
+    default: 1
+    required: true
+
+  node_memoria_gb:
+    type: number
+    title: "Memoria RAM por Worker Node (GB)"
+    description: "RAM en GB (ratio válido: 1-64 GB por OCPU)"
+    default: 8
+    required: true
+
+  ssh_public_key:
+    type: string
+    title: "Llave Pública SSH"
+    description: "Pega tu llave pública SSH para acceder a los worker nodes (ssh-rsa o ssh-ed25519)"
+    required: true
