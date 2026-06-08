@@ -1,0 +1,278 @@
+title: "08 - Peering Local: Hub-Spoke (Misma Región)"
+description: "Arquitectura Hub-Spoke con VCN peering local. Hub contiene Load Balancer, webservers y base de datos. Spoke contiene servidores backend. Misma región OCI con peering por LPG."
+schemaVersion: 1.1.0
+version: "20260411"
+locale: "es"
+
+logoUrl: "https://raw.githubusercontent.com/jesmonsa/oracle-cloud-latam/main/docs/logo.png"
+
+variableGroups:
+  - title: "Información del Tenancy"
+    visible: false
+    variables:
+      - tenancy_ocid
+      - region
+      - current_user_ocid
+      - fingerprint
+      - private_key_path
+
+  - title: "Configuración General"
+    visible: true
+    variables:
+      - compartment_ocid
+      - proyecto
+      - ambiente
+      - propietario
+
+  - title: "Configuración de Red Hub"
+    visible: true
+    variables:
+      - vcn_hub_cidr
+      - subnet_hub_publica_cidr
+      - subnet_hub_privada_cidr
+      - subnet_hub_db_cidr
+
+  - title: "Configuración de Red Spoke"
+    visible: true
+    variables:
+      - vcn_spoke_cidr
+      - subnet_spoke_backend_cidr
+
+  - title: "Configuración de Cómputo"
+    visible: true
+    variables:
+      - ssh_public_key
+      - shape_webserver
+      - ocpus_webserver
+      - memoria_webserver_gb
+
+  - title: "Configuración de Base de Datos"
+    visible: true
+    variables:
+      - db_admin_password
+      - db_name
+      - db_version
+      - shape_db
+      - cpu_core_count_db
+      - data_storage_size_in_gb
+      - database_edition
+      - license_model
+
+  - title: "Configuración de Load Balancer"
+    visible: true
+    variables:
+      - lb_bandwidth_min_mbps
+      - lb_bandwidth_max_mbps
+
+  - title: "Configuración de Bastion"
+    visible: true
+    variables:
+      - bastion_cidr_permitidos
+
+  - title: "Seguridad"
+    visible: true
+    variables:
+      - habilitar_nsg
+      - habilitar_baseline_seguridad
+
+variables:
+  compartment_ocid:
+    type: oci:identity:compartment:id
+    title: "Compartment de Destino"
+    description: "Compartment donde se crearán todos los recursos"
+    required: true
+
+  proyecto:
+    type: string
+    title: "Nombre del Proyecto"
+    description: "Prefijo para recursos (máx 8 caracteres, se combina con hub/spoke)"
+    default: "peer"
+    required: true
+    pattern: "^[a-z0-9-]{1,8}$"
+
+  ambiente:
+    type: enum
+    title: "Ambiente de Despliegue"
+    description: "Selecciona el ambiente"
+    enum:
+      - "produccion"
+      - "staging"
+      - "desarrollo"
+    default: "desarrollo"
+    required: true
+
+  propietario:
+    type: string
+    title: "Propietario"
+    description: "E-mail o nombre del responsable"
+    default: ""
+    required: false
+
+  vcn_hub_cidr:
+    type: string
+    title: "CIDR de la VCN Hub"
+    description: "Rango de direcciones RFC1918 para la VCN Hub"
+    default: "10.0.0.0/16"
+    required: true
+
+  subnet_hub_publica_cidr:
+    type: string
+    title: "CIDR Subnet Pública Hub"
+    description: "Rango para subnet pública Hub (Load Balancer)"
+    default: "10.0.10.0/24"
+    required: true
+
+  subnet_hub_privada_cidr:
+    type: string
+    title: "CIDR Subnet Privada Hub"
+    description: "Rango para subnet privada Hub (webservers)"
+    default: "10.0.1.0/24"
+    required: true
+
+  subnet_hub_db_cidr:
+    type: string
+    title: "CIDR Subnet DB Hub"
+    description: "Rango para subnet privada Hub (Base de Datos)"
+    default: "10.0.3.0/24"
+    required: true
+
+  vcn_spoke_cidr:
+    type: string
+    title: "CIDR de la VCN Spoke"
+    description: "Rango para la VCN Spoke (NO debe solapar con Hub)"
+    default: "10.1.0.0/16"
+    required: true
+
+  subnet_spoke_backend_cidr:
+    type: string
+    title: "CIDR Subnet Backend Spoke"
+    description: "Rango para subnet privada Spoke (backend)"
+    default: "10.1.1.0/24"
+    required: true
+
+  ssh_public_key:
+    type: string
+    title: "Llave Pública SSH"
+    description: "Pega tu llave pública SSH"
+    required: true
+
+  shape_webserver:
+    type: oci:core:instanceshape:name
+    title: "Shape para Webservers y Backend"
+    description: "Shape Flex para instancias de cómputo"
+    default: "VM.Standard.E4.Flex"
+    required: true
+    dependsOn:
+      compartmentId: compartment_ocid
+
+  ocpus_webserver:
+    type: number
+    title: "OCPUs"
+    description: "Número de OCPUs para instancias"
+    default: 1
+    required: true
+
+  memoria_webserver_gb:
+    type: number
+    title: "Memoria RAM (GB)"
+    description: "RAM en GB"
+    default: 8
+    required: true
+
+  db_admin_password:
+    type: password
+    title: "Contraseña de Administrador DB"
+    description: "Contraseña SYS/SYSTEM para el DB System"
+    required: true
+
+  db_name:
+    type: string
+    title: "Nombre de la Base de Datos"
+    description: "Nombre de la base de datos"
+    default: "HUBDB"
+    required: true
+
+  db_version:
+    type: string
+    title: "Versión de Oracle Database"
+    description: "Versión de Oracle Database"
+    default: "19.30.0.0"
+    required: true
+
+  shape_db:
+    type: oci:core:instanceshape:name
+    title: "Shape del DB System"
+    description: "Shape para el servidor de base de datos"
+    default: "VM.Standard.E4.Flex"
+    required: true
+    dependsOn:
+      compartmentId: compartment_ocid
+
+  cpu_core_count_db:
+    type: number
+    title: "OCPUs para DB System"
+    description: "Número de OCPUs del DB System"
+    default: 2
+    required: true
+
+  data_storage_size_in_gb:
+    type: number
+    title: "Almacenamiento de Datos (GB)"
+    description: "Almacenamiento de datos en GB"
+    default: 256
+    required: true
+
+  database_edition:
+    type: enum
+    title: "Edición de Oracle Database"
+    description: "Selecciona la edición"
+    enum:
+      - "STANDARD_EDITION"
+      - "ENTERPRISE_EDITION"
+      - "ENTERPRISE_EDITION_HIGH_PERFORMANCE"
+      - "ENTERPRISE_EDITION_EXTREME_PERFORMANCE"
+    default: "ENTERPRISE_EDITION"
+    required: true
+
+  license_model:
+    type: enum
+    title: "Modelo de Licencia"
+    description: "Modelo de licenciamiento"
+    enum:
+      - "LICENSE_INCLUDED"
+      - "BRING_YOUR_OWN_LICENSE"
+    default: "LICENSE_INCLUDED"
+    required: true
+
+  lb_bandwidth_min_mbps:
+    type: number
+    title: "Ancho de Banda Mínimo del LB (Mbps)"
+    description: "Ancho de banda mínimo"
+    default: 10
+    required: true
+
+  lb_bandwidth_max_mbps:
+    type: number
+    title: "Ancho de Banda Máximo del LB (Mbps)"
+    description: "Ancho de banda máximo"
+    default: 10
+    required: true
+
+  bastion_cidr_permitidos:
+    type: string
+    title: "CIDRs Permitidos para Bastion"
+    description: "CIDRs permitidos para acceso SSH"
+    default: "0.0.0.0/0"
+    required: true
+
+  habilitar_nsg:
+    type: boolean
+    title: "Usar Network Security Groups"
+    description: "Habilitar Network Security Groups"
+    default: true
+
+  habilitar_baseline_seguridad:
+    type: boolean
+    title: "Activar Baselines de Seguridad"
+    description: "Habilitar baselines de seguridad"
+    default: false

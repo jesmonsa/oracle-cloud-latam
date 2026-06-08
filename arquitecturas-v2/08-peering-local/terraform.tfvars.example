@@ -1,0 +1,49 @@
+# ─── Autenticación OCI ────────────────────────────────────────────────────────
+tenancy_ocid      = "<tu_tenancy_ocid>"
+current_user_ocid = "<tu_user_ocid>"
+fingerprint       = "<tu_fingerprint>"
+private_key_path  = "~/.oci/key.pem"
+region            = "us-ashburn-1"
+
+# ─── Proyecto ─────────────────────────────────────────────────────────────────
+compartment_ocid = "<tu_compartment_ocid>"
+proyecto         = "peer"
+ambiente         = "desarrollo"
+propietario      = "<tu_email>"
+
+# ─── Red Hub ──────────────────────────────────────────────────────────────────
+vcn_hub_cidr            = "10.0.0.0/16"
+subnet_hub_publica_cidr = "10.0.10.0/24"
+subnet_hub_privada_cidr = "10.0.1.0/24"
+subnet_hub_db_cidr      = "10.0.3.0/24"
+
+# ─── Red Spoke ────────────────────────────────────────────────────────────────
+vcn_spoke_cidr            = "10.1.0.0/16"
+subnet_spoke_backend_cidr = "10.1.1.0/24"
+
+# ─── Cómputo ─────────────────────────────────────────────────────────────────
+shape_webserver      = "VM.Standard.E4.Flex"
+ocpus_webserver      = 1
+memoria_webserver_gb = 8
+ssh_public_key       = "<tu_ssh_public_key>"
+
+# ─── Load Balancer ────────────────────────────────────────────────────────────
+lb_bandwidth_min_mbps = 10
+lb_bandwidth_max_mbps = 10
+
+# ─── Base de Datos ────────────────────────────────────────────────────────────
+db_admin_password       = "<password_seguro_min_12_chars>"
+db_name                 = "HUBDB"
+db_version              = "19.30.0.0"
+shape_db                = "VM.Standard.E4.Flex"
+cpu_core_count_db       = 2
+data_storage_size_in_gb = 256
+database_edition        = "ENTERPRISE_EDITION"
+license_model           = "LICENSE_INCLUDED"
+
+# ─── Bastion ──────────────────────────────────────────────────────────────────
+bastion_cidr_permitidos = ["0.0.0.0/0"]
+
+# ─── Seguridad ────────────────────────────────────────────────────────────────
+habilitar_nsg                = true
+habilitar_baseline_seguridad = false
