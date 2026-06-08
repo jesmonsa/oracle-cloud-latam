@@ -1,0 +1,84 @@
+title: OCI Generative AI Service
+description: "Modelos de lenguaje grandes (LLM) y RAG pipeline completo"
+schemaVersion: 1.1.0
+version: 1.0.0
+
+informationItems:
+  - name: Project Name
+    type: string
+    required: true
+    default: "genai-platform"
+
+  - name: Environment
+    type: enum
+    enum:
+      - dev
+      - staging
+      - prod
+    default: "dev"
+
+  - name: Region
+    type: oci:identity:region
+    required: true
+    default: "us-phoenix-1"
+
+  - name: Compartment
+    type: oci:identity:compartment
+    required: true
+
+  - name: LLM Model
+    type: enum
+    enum:
+      - "meta.llama-2-7b-chat"
+      - "meta.llama-2-13b-chat"
+      - "meta.llama-2-70b-chat"
+      - "cohere.command"
+    default: "meta.llama-2-70b-chat"
+
+  - name: Enable RAG
+    type: boolean
+    default: true
+
+  - name: Vector Database Type
+    type: enum
+    enum:
+      - mysql-heatwave
+      - adw
+      - opensearch
+    default: "mysql-heatwave"
+    visible:
+      - enableRag
+
+  - name: Temperature
+    type: number
+    minimum: 0.0
+    maximum: 1.0
+    default: 0.7
+    description: "Control de creatividad (0=determinista, 1=creativo)"
+
+  - name: Max Tokens
+    type: integer
+    minimum: 100
+    maximum: 4096
+    default: 1000
+
+  - name: Documents Bucket Name
+    type: string
+    required: true
+    default: "rag-documents"
+
+outputGroups:
+  - title: "Generative AI Service"
+    outputs:
+      - llm_model
+      - embedding_model
+      - rag_enabled
+
+  - title: "RAG Configuration"
+    outputs:
+      - vector_db_type
+      - documents_bucket_uri
+
+  - title: "Object Storage"
+    outputs:
+      - object_storage_namespace
