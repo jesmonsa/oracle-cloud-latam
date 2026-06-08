@@ -1,0 +1,321 @@
+title: "07 - DataGuard HA: DB Primario + Standby + NFS + LB + Bastion"
+description: "Arquitectura de alta disponibilidad con Oracle DataGuard. Incluye DB primario en AD1 y Standby en AD2, webservers, Load Balancer y almacenamiento NFS compartido."
+schemaVersion: 1.1.0
+version: "20260411"
+locale: "es"
+
+logoUrl: "https://raw.githubusercontent.com/jesmonsa/oracle-cloud-latam/main/docs/logo.png"
+
+variableGroups:
+  - title: "Información del Tenancy"
+    visible: false
+    variables:
+      - tenancy_ocid
+      - region
+      - current_user_ocid
+      - fingerprint
+      - private_key_path
+
+  - title: "Configuración General"
+    visible: true
+    variables:
+      - compartment_ocid
+      - proyecto
+      - ambiente
+      - propietario
+
+  - title: "Configuración de Red (VCN)"
+    visible: true
+    variables:
+      - vcn_cidr
+      - subnet_privada_ad1_cidr
+      - subnet_privada_ad2_cidr
+      - subnet_lb_cidr
+      - subnet_db_ad1_cidr
+      - subnet_db_ad2_cidr
+
+  - title: "Configuración de Cómputo (Webservers)"
+    visible: true
+    variables:
+      - ssh_public_key
+      - shape_webserver
+      - ocpus_webserver
+      - memoria_webserver_gb
+      - imagen_os
+
+  - title: "Configuración de Base de Datos"
+    visible: true
+    variables:
+      - db_admin_password
+      - db_name
+      - db_version
+      - shape_db
+      - cpu_core_count_db
+      - data_storage_size_in_gb
+      - database_edition
+      - license_model
+
+  - title: "Configuración de DataGuard"
+    visible: true
+    variables:
+      - dataguard_protection_mode
+      - dataguard_transport_type
+
+  - title: "Configuración de Load Balancer"
+    visible: true
+    variables:
+      - lb_bandwidth_min_mbps
+      - lb_bandwidth_max_mbps
+
+  - title: "Configuración de Almacenamiento (NFS)"
+    visible: true
+    variables:
+      - nfs_ruta_exportacion
+
+  - title: "Configuración de Bastion"
+    visible: true
+    variables:
+      - bastion_cidr_permitidos
+
+  - title: "Seguridad"
+    visible: true
+    variables:
+      - habilitar_nsg
+      - habilitar_baseline_seguridad
+
+variables:
+  compartment_ocid:
+    type: oci:identity:compartment:id
+    title: "Compartment de Destino"
+    description: "Compartment donde se crearán todos los recursos"
+    required: true
+
+  proyecto:
+    type: string
+    title: "Nombre del Proyecto"
+    description: "Prefijo para todos los recursos. Minúsculas, máx 15 caracteres"
+    default: "dg-ha"
+    required: true
+    pattern: "^[a-z0-9-]{1,15}$"
+
+  ambiente:
+    type: enum
+    title: "Ambiente de Despliegue"
+    description: "Selecciona el ambiente"
+    enum:
+      - "produccion"
+      - "staging"
+      - "desarrollo"
+    default: "desarrollo"
+    required: true
+
+  propietario:
+    type: string
+    title: "Propietario"
+    description: "E-mail o nombre del responsable"
+    default: "admin"
+    required: true
+
+  vcn_cidr:
+    type: string
+    title: "CIDR de la VCN"
+    description: "Rango de direcciones RFC1918 para la red virtual"
+    default: "10.0.0.0/16"
+    required: true
+
+  subnet_privada_ad1_cidr:
+    type: string
+    title: "CIDR Subnet Privada AD1"
+    description: "Rango para subnet privada AD1 (webservers + FSS mount target)"
+    default: "10.0.1.0/24"
+    required: true
+
+  subnet_privada_ad2_cidr:
+    type: string
+    title: "CIDR Subnet Privada AD2"
+    description: "Rango para subnet privada AD2 (webservers)"
+    default: "10.0.2.0/24"
+    required: true
+
+  subnet_lb_cidr:
+    type: string
+    title: "CIDR Subnet del Load Balancer"
+    description: "Rango para subnet pública regional del Load Balancer"
+    default: "10.0.10.0/24"
+    required: true
+
+  subnet_db_ad1_cidr:
+    type: string
+    title: "CIDR Subnet DB AD1 (Primario)"
+    description: "Rango para subnet privada de Base de Datos en AD1 (Primario)"
+    default: "10.0.3.0/24"
+    required: true
+
+  subnet_db_ad2_cidr:
+    type: string
+    title: "CIDR Subnet DB AD2 (Standby)"
+    description: "Rango para subnet privada de Base de Datos en AD2 (Standby)"
+    default: "10.0.4.0/24"
+    required: true
+
+  ssh_public_key:
+    type: string
+    title: "Llave Pública SSH"
+    description: "Pega tu llave pública SSH (ssh-rsa, ssh-ed25519 o ssh-ecdsa)"
+    required: true
+
+  shape_webserver:
+    type: oci:core:instanceshape:name
+    title: "Shape del Servidor Web"
+    description: "VM.Standard.E4.Flex es elegible para Always Free Tier"
+    default: "VM.Standard.E4.Flex"
+    required: true
+    dependsOn:
+      compartmentId: compartment_ocid
+
+  ocpus_webserver:
+    type: number
+    title: "OCPUs para Webserver"
+    description: "Número de OCPUs por instancia webserver"
+    default: 1
+    required: true
+
+  memoria_webserver_gb:
+    type: number
+    title: "Memoria RAM (GB) para Webserver"
+    description: "RAM en GB (ratio válido: 1-64 GB por OCPU)"
+    default: 8
+    required: true
+
+  imagen_os:
+    type: string
+    title: "OCID de Imagen OS (Opcional)"
+    description: "Vacío = última Oracle Linux 8 disponible"
+    default: ""
+    required: false
+
+  db_admin_password:
+    type: password
+    title: "Contraseña de Administrador DB"
+    description: "Contraseña SYS para Oracle Database. Mínimo 9 caracteres, 2 mayúsculas, 2 minúsculas, 2 números, 2 especiales"
+    required: true
+
+  db_name:
+    type: string
+    title: "Nombre de la Base de Datos"
+    description: "Máximo 8 caracteres alfanuméricos, debe comenzar con letra"
+    default: "APPDB"
+    required: true
+    pattern: "^[A-Za-z][A-Za-z0-9]{1,7}$"
+
+  db_version:
+    type: string
+    title: "Versión de Oracle Database"
+    description: "Versión de Oracle Database a desplegar"
+    default: "19.30.0.0"
+    required: true
+
+  shape_db:
+    type: oci:core:instanceshape:name
+    title: "Shape del DB System"
+    description: "Shape para el servidor de base de datos (primario y standby deben coincidir)"
+    default: "VM.Standard.E4.Flex"
+    required: true
+    dependsOn:
+      compartmentId: compartment_ocid
+
+  cpu_core_count_db:
+    type: number
+    title: "OCPUs para DB System"
+    description: "Número de OCPUs para el DB System"
+    default: 2
+    required: true
+
+  data_storage_size_in_gb:
+    type: number
+    title: "Almacenamiento de Datos (GB)"
+    description: "Almacenamiento de datos en GB (mínimo 256)"
+    default: 256
+    required: true
+
+  database_edition:
+    type: enum
+    title: "Edición de Oracle Database"
+    description: "DataGuard requiere Enterprise Edition mínimo"
+    enum:
+      - "ENTERPRISE_EDITION"
+      - "ENTERPRISE_EDITION_HIGH_PERFORMANCE"
+      - "ENTERPRISE_EDITION_EXTREME_PERFORMANCE"
+    default: "ENTERPRISE_EDITION"
+    required: true
+
+  license_model:
+    type: enum
+    title: "Modelo de Licenciamiento"
+    description: "Selecciona el modelo de licencia"
+    enum:
+      - "LICENSE_INCLUDED"
+      - "BRING_YOUR_OWN_LICENSE"
+    default: "LICENSE_INCLUDED"
+    required: true
+
+  dataguard_protection_mode:
+    type: enum
+    title: "Modo de Protección DataGuard"
+    description: "MAXIMUM_PERFORMANCE (async, recomendado), MAXIMUM_AVAILABILITY, MAXIMUM_PROTECTION"
+    enum:
+      - "MAXIMUM_PERFORMANCE"
+      - "MAXIMUM_AVAILABILITY"
+      - "MAXIMUM_PROTECTION"
+    default: "MAXIMUM_PERFORMANCE"
+    required: true
+
+  dataguard_transport_type:
+    type: enum
+    title: "Tipo de Transporte de Redo Logs"
+    description: "ASYNC (recomendado cross-AD) o SYNC (RPO=0, misma región)"
+    enum:
+      - "ASYNC"
+      - "SYNC"
+    default: "ASYNC"
+    required: true
+
+  lb_bandwidth_min_mbps:
+    type: number
+    title: "Ancho de Banda Mínimo del LB (Mbps)"
+    description: "Ancho de banda mínimo del Load Balancer"
+    default: 10
+    required: true
+
+  lb_bandwidth_max_mbps:
+    type: number
+    title: "Ancho de Banda Máximo del LB (Mbps)"
+    description: "Ancho de banda máximo del Load Balancer"
+    default: 10
+    required: true
+
+  nfs_ruta_exportacion:
+    type: string
+    title: "Ruta de Exportación NFS"
+    description: "Ruta de exportación del File Storage Service"
+    default: "/shared"
+    required: true
+
+  bastion_cidr_permitidos:
+    type: string
+    title: "CIDRs Permitidos para Bastion"
+    description: "CIDRs permitidos para acceso SSH a Bastion (ej: 0.0.0.0/0)"
+    default: "0.0.0.0/0"
+    required: true
+
+  habilitar_nsg:
+    type: boolean
+    title: "Usar Network Security Groups"
+    description: "Recomendado: NSG ofrece seguridad más granular"
+    default: true
+
+  habilitar_baseline_seguridad:
+    type: boolean
+    title: "Activar Baseline de Seguridad"
+    description: "Cloud Guard y auditoría. Recomendado para producción"
+    default: false
