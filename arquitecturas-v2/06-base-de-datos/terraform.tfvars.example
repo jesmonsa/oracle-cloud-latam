@@ -1,0 +1,49 @@
+# ─── Autenticación OCI ────────────────────────────────────────────────────────
+tenancy_ocid      = "<tu_tenancy_ocid>"
+current_user_ocid = "<tu_user_ocid>"
+fingerprint       = "<tu_fingerprint>"
+private_key_path  = "~/.oci/key.pem"
+region            = "us-ashburn-1"
+
+# ─── Proyecto ─────────────────────────────────────────────────────────────────
+compartment_ocid = "<tu_compartment_ocid>"
+proyecto         = "db-app"
+ambiente         = "desarrollo"
+propietario      = "<tu_email>"
+
+# ─── Red ──────────────────────────────────────────────────────────────────────
+vcn_cidr                = "10.0.0.0/16"
+subnet_privada_ad1_cidr = "10.0.1.0/24"
+subnet_privada_ad2_cidr = "10.0.2.0/24"
+subnet_lb_cidr          = "10.0.10.0/24"
+subnet_db_cidr          = "10.0.3.0/24"
+
+# ─── Cómputo (Webservers) ────────────────────────────────────────────────────
+shape_webserver      = "VM.Standard.E4.Flex"
+ocpus_webserver      = 1
+memoria_webserver_gb = 8
+ssh_public_key       = "<tu_ssh_public_key>"
+
+# ─── Load Balancer ────────────────────────────────────────────────────────────
+lb_bandwidth_min_mbps = 10
+lb_bandwidth_max_mbps = 10
+
+# ─── File Storage (NFS) ──────────────────────────────────────────────────────
+nfs_ruta_exportacion = "/shared"
+
+# ─── Base de Datos ────────────────────────────────────────────────────────────
+db_admin_password       = "<password_seguro_min_12_chars>"
+db_name                 = "APPDB"
+db_version              = "19.30.0.0"
+shape_db                = "VM.Standard.E4.Flex"
+cpu_core_count_db       = 2
+data_storage_size_in_gb = 256
+database_edition        = "ENTERPRISE_EDITION"
+license_model           = "LICENSE_INCLUDED"
+
+# ─── Bastion ──────────────────────────────────────────────────────────────────
+bastion_cidr_permitidos = ["0.0.0.0/0"]
+
+# ─── Seguridad ────────────────────────────────────────────────────────────────
+habilitar_nsg                = true
+habilitar_baseline_seguridad = false
