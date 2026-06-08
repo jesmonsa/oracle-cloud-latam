@@ -1,0 +1,50 @@
+title: "OCI Artifact Registry - Gestión Centralizada de Artefactos"
+description: "Despliega Artifact Registry y Container Registry para gestión empresarial de dependencias e imágenes"
+schemaVersion: 1.1.0
+version: "1.0.0"
+locale: "es"
+
+groupings:
+  - title: "Configuración OCI"
+    variables:
+      - tenancy_ocid
+      - user_ocid
+      - fingerprint
+      - private_key_path
+      - region
+      - compartment_id
+
+  - title: "Artifact Registry"
+    variables:
+      - artifact_namespace
+      - create_maven_repos
+      - create_npm_repos
+
+  - title: "Container Registry"
+    variables:
+      - container_image_names
+      - enable_image_scanning
+
+  - title: "Seguridad"
+    variables:
+      - enable_encryption
+      - enable_audit_logging
+      - artifact_retention_days
+
+variables:
+  tenancy_ocid:
+    type: string
+    title: "Tenancy OCID"
+    required: true
+  compartment_id:
+    type: string
+    title: "Compartment OCID"
+    required: true
+  artifact_namespace:
+    type: string
+    title: "Namespace del Artifact Registry"
+    required: true
+  enable_image_scanning:
+    type: boolean
+    title: "Habilitar Scans de Vulnerabilidades"
+    default: true
