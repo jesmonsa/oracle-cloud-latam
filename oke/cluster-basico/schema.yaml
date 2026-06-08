@@ -1,0 +1,200 @@
+title: "OKE Cluster Básico — Arquitectura de Referencia"
+description: "Despliega un cluster de Kubernetes empresarial en OCI con Flannel CNI, Node Pool Flex en subnet privada, y 3 subnets dedicadas (API, LB, Nodes). Despliegue de una línea mediante OCI Resource Manager con configuración optimizada para seguridad y escalabilidad."
+schemaVersion: 1.1.0
+version: "20260412"
+locale: "es"
+
+logoUrl: "https://raw.githubusercontent.com/oracle/oci-kubernetes-manifest-samples/master/docs/images/kubernetes.png"
+
+variableGroups:
+  - title: "Información del Tenancy"
+    visible: false
+    variables:
+      - tenancy_ocid
+      - region
+      - current_user_ocid
+      - fingerprint
+      - private_key_path
+
+  - title: "Configuración General"
+    visible: true
+    variables:
+      - compartment_ocid
+      - proyecto
+      - ambiente
+      - propietario
+
+  - title: "Configuración de Red"
+    visible: true
+    variables:
+      - vcn_cidr
+      - subnet_api_cidr
+      - subnet_lb_cidr
+      - subnet_nodepool_cidr
+
+  - title: "Configuración de Kubernetes"
+    visible: true
+    variables:
+      - k8s_version
+      - node_pool_size
+      - node_shape
+      - node_ocpus
+      - node_memoria_gb
+      - ssh_public_key
+
+  - title: "Red Interna K8s (Flannel)"
+    visible: true
+    variables:
+      - pods_cidr
+      - services_cidr
+
+variables:
+  # ─── Tenancy ──────────────────────────────────────────────────────────────
+  tenancy_ocid:
+    type: string
+    visible: false
+
+  region:
+    type: oci:identity:region:name
+    visible: false
+    required: true
+
+  current_user_ocid:
+    type: string
+    visible: false
+
+  fingerprint:
+    type: string
+    visible: false
+    password: true
+
+  private_key_path:
+    type: string
+    visible: false
+
+  # ─── General ───────────────────────────────────────────────────────────────
+  compartment_ocid:
+    type: oci:identity:compartment:id
+    title: "Compartment de Destino"
+    description: "Compartment donde se crearán el cluster OKE y todos los recursos de red"
+    required: true
+
+  proyecto:
+    type: string
+    title: "Nombre del Proyecto"
+    description: "Prefijo para todos los recursos. Solo minúsculas y números, máximo 12 caracteres"
+    default: "oke-basico"
+    required: true
+    pattern: "^[a-z][a-z0-9-]{1,11}$"
+
+  ambiente:
+    type: enum
+    title: "Ambiente de Despliegue"
+    description: "Ambiente donde se despliega la infraestructura"
+    enum:
+      - "produccion"
+      - "staging"
+      - "desarrollo"
+    default: "desarrollo"
+    required: true
+
+  propietario:
+    type: string
+    title: "Propietario"
+    description: "E-mail o nombre del responsable del cluster"
+    default: "admin"
+    required: true
+
+  # ─── Red ───────────────────────────────────────────────────────────────────
+  vcn_cidr:
+    type: string
+    title: "CIDR de la VCN"
+    description: "Bloque CIDR principal de la red virtual"
+    default: "10.0.0.0/16"
+    required: true
+
+  subnet_api_cidr:
+    type: string
+    title: "CIDR Subnet API Endpoint"
+    description: "Subnet pública para el Kubernetes API endpoint (acceso desde kubectl)"
+    default: "10.0.0.0/28"
+    required: true
+
+  subnet_lb_cidr:
+    type: string
+    title: "CIDR Subnet Load Balancer"
+    description: "Subnet pública donde OCI crea Load Balancers para Kubernetes Services tipo LoadBalancer"
+    default: "10.0.1.0/24"
+    required: true
+
+  subnet_nodepool_cidr:
+    type: string
+    title: "CIDR Subnet Node Pool"
+    description: "Subnet privada para los worker nodes — tráfico protegido con NAT Gateway"
+    default: "10.0.10.0/24"
+    required: true
+
+  # ─── Kubernetes ────────────────────────────────────────────────────────────
+  k8s_version:
+    type: string
+    title: "Versión de Kubernetes"
+    description: "Versión para cluster y node pool"
+    default: "v1.32.1"
+    required: true
+
+  node_pool_size:
+    type: number
+    title: "Cantidad de Worker Nodes"
+    description: "Número de nodos en el pool (mínimo 2 para alta disponibilidad)"
+    default: 2
+    minimum: 1
+    maximum: 10
+    required: true
+
+  node_shape:
+    type: oci:core:instanceshape:name
+    title: "Shape de Worker Nodes"
+    description: "Tipo de instancia: E4/E5/E6 (x86), A1 (ARM), X9. Soporta Always Free Tier"
+    default: "VM.Standard.E4.Flex"
+    required: true
+    dependsOn:
+      compartmentId: compartment_ocid
+
+  node_ocpus:
+    type: number
+    title: "OCPUs por Worker Node"
+    description: "Número de OCPUs en shape Flex (mínimo 1)"
+    default: 1
+    minimum: 1
+    maximum: 128
+    required: true
+
+  node_memoria_gb:
+    type: number
+    title: "Memoria RAM por Worker Node (GB)"
+    description: "RAM en GB en shape Flex"
+    default: 8
+    minimum: 1
+    maximum: 1024
+    required: true
+
+  ssh_public_key:
+    type: string
+    title: "Clave Pública SSH"
+    description: "Clave SSH pública para acceso a los worker nodes (debug y administración)"
+    required: true
+
+  # ─── Flannel ───────────────────────────────────────────────────────────────
+  pods_cidr:
+    type: string
+    title: "CIDR de Pods (Flannel)"
+    description: "Rango de IPs para pods — no debe solaparse con la VCN"
+    default: "10.244.0.0/16"
+    required: true
+
+  services_cidr:
+    type: string
+    title: "CIDR de Services K8s"
+    description: "Rango de IPs para Kubernetes Services (ClusterIP)"
+    default: "10.96.0.0/16"
+    required: true

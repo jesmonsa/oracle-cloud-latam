@@ -1,0 +1,61 @@
+# ╔══════════════════════════════════════════════════════════════════════════════╗
+# ║  terraform.tfvars.example — OKE Cluster Básico                               ║
+# ║                                                                              ║
+# ║  INSTRUCCIONES:                                                              ║
+# ║  1. Copiar este archivo a terraform.tfvars                                   ║
+# ║  2. Completar los valores con tus credenciales OCI                           ║
+# ║  3. Guardar con permisos restrictivos (chmod 600 terraform.tfvars)           ║
+# ║  4. Nunca hacer commit a git (agregar a .gitignore)                          ║
+# ║                                                                              ║
+# ║  NOTA IMPORTANTE:                                                            ║
+# ║  Los valores de credenciales son SENSIBLES. Protege terraform.tfvars        ║
+# ║  con contraseña o usar OCI CLI con perfiles autenticados.                    ║
+# ╚══════════════════════════════════════════════════════════════════════════════╝
+
+# ─── Credenciales OCI ──────────────────────────────────────────────────────────
+# Obtener desde tu usuario OCI en la consola
+
+tenancy_ocid      = ""
+current_user_ocid = ""
+fingerprint       = ""
+private_key_path  = "~/.oci/key.pem"
+region            = "us-ashburn-1"
+
+# ─── Ubicación de Recursos ────────────────────────────────────────────────────
+# OCID del compartment donde se crearán los recursos
+
+compartment_ocid = ""
+
+# ─── Identificación ────────────────────────────────────────────────────────────
+# Identificadores para etiquetas y nombres de recursos
+
+proyecto    = "oke-basico"
+ambiente    = "desarrollo"
+propietario = "admin@ejemplo.com"
+
+# ─── Configuración de Red ──────────────────────────────────────────────────────
+# CIDRs de la VCN y subnets dedicadas para OKE
+
+vcn_cidr             = "10.0.0.0/16"
+subnet_api_cidr      = "10.0.0.0/28"
+subnet_lb_cidr       = "10.0.1.0/24"
+subnet_nodepool_cidr = "10.0.10.0/24"
+
+# ─── Configuración de Kubernetes ───────────────────────────────────────────────
+# Versión de Kubernetes y configuración de worker nodes
+
+k8s_version     = "v1.32.1"
+node_pool_size  = 2
+node_shape      = "VM.Standard.E4.Flex"
+node_ocpus      = 1
+node_memoria_gb = 8
+
+# Clave SSH pública para acceso a los worker nodes
+# Generar con: ssh-keygen -t rsa -b 4096 -f ~/.ssh/oke_key
+ssh_public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCxxx..."
+
+# ─── Red Interna de Kubernetes ────────────────────────────────────────────────
+# CIDRs para Flannel overlay y Kubernetes Services
+
+pods_cidr    = "10.244.0.0/16"
+services_cidr = "10.96.0.0/16"
