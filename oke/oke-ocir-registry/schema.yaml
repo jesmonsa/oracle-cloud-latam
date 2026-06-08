@@ -1,0 +1,235 @@
+---
+# ╔══════════════════════════════════════════════════════════════════════════════╗
+# ║  Schema de Validación - OKE con OCIR Registry                               ║
+# ║  Define estructura de entrada y validaciones de variables                    ║
+# ╚══════════════════════════════════════════════════════════════════════════════╝
+
+schemaVersion: "2.0"
+title: "Arquitectura OKE con OCIR Registry"
+description: "Cluster Kubernetes en OCI con registro privado de contenedores"
+
+inputs:
+  # ┌────────────────────────────────────────────────────────────────────────────┐
+  # │ SECCIÓN: Autenticación OCI                                                │
+  # └────────────────────────────────────────────────────────────────────────────┘
+  - name: "tenancy_ocid"
+    type: "string"
+    required: true
+    description: "OCID del Tenancy"
+    sensitive: true
+    pattern: "^ocid1\\.tenancy\\."
+
+  - name: "current_user_ocid"
+    type: "string"
+    required: true
+    description: "OCID del usuario IAM"
+    sensitive: true
+    pattern: "^ocid1\\.user\\."
+
+  - name: "fingerprint"
+    type: "string"
+    required: true
+    description: "Fingerprint de clave API"
+    sensitive: true
+    pattern: "^([A-F0-9]{2}:){15}[A-F0-9]{2}$"
+
+  - name: "private_key_path"
+    type: "string"
+    required: true
+    description: "Ruta a archivo de clave privada"
+    sensitive: true
+
+  - name: "region"
+    type: "string"
+    required: false
+    default: "sa-santiago-1"
+    description: "Región OCI de despliegue"
+    allowedValues:
+      - "sa-santiago-1"
+      - "sa-sao-paulo-1"
+      - "sa-vinhedo-1"
+      - "us-ashburn-1"
+      - "eu-madrid-1"
+
+  # ┌────────────────────────────────────────────────────────────────────────────┐
+  # │ SECCIÓN: Configuración del Cluster OKE                                    │
+  # └────────────────────────────────────────────────────────────────────────────┘
+  - name: "cluster_name"
+    type: "string"
+    required: false
+    default: "oke-ocir-cluster"
+    description: "Nombre del cluster OKE"
+    minLength: 3
+    maxLength: 255
+    pattern: "^[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]$"
+
+  - name: "kubernetes_version"
+    type: "string"
+    required: false
+    default: "v1.29"
+    description: "Versión de Kubernetes"
+    allowedValues:
+      - "v1.28"
+      - "v1.29"
+      - "v1.30"
+
+  - name: "node_pool_name"
+    type: "string"
+    required: false
+    default: "pool-standard-ocir"
+    description: "Nombre del node pool"
+
+  - name: "initial_node_count"
+    type: "integer"
+    required: false
+    default: 3
+    description: "Número inicial de nodos"
+    minimum: 1
+    maximum: 100
+
+  - name: "node_shape"
+    type: "string"
+    required: false
+    default: "VM.Standard.E4.Flex"
+    description: "Shape de nodos"
+    allowedValues:
+      - "VM.Standard.E4.Flex"
+      - "VM.Standard.E5.Flex"
+      - "VM.Standard.A1.Flex"
+
+  - name: "node_ocpus"
+    type: "integer"
+    required: false
+    default: 2
+    description: "OCPUs para nodos Flex"
+    minimum: 1
+    maximum: 64
+
+  - name: "node_memory_gb"
+    type: "integer"
+    required: false
+    default: 16
+    description: "Memoria en GB para nodos Flex"
+    minimum: 1
+    maximum: 1024
+
+  # ┌────────────────────────────────────────────────────────────────────────────┐
+  # │ SECCIÓN: Configuración de VCN                                             │
+  # └────────────────────────────────────────────────────────────────────────────┘
+  - name: "vcn_name"
+    type: "string"
+    required: false
+    default: "vcn-oke-ocir"
+    description: "Nombre de la VCN"
+
+  - name: "vcn_cidr_block"
+    type: "string"
+    required: false
+    default: "10.0.0.0/16"
+    description: "Bloque CIDR de la VCN"
+    pattern: "^([0-9]{1,3}\\.){3}[0-9]{1,3}/[0-9]{1,2}$"
+
+  - name: "subnet_cidr_block"
+    type: "string"
+    required: false
+    default: "10.0.1.0/24"
+    description: "Bloque CIDR de la subnet"
+    pattern: "^([0-9]{1,3}\\.){3}[0-9]{1,3}/[0-9]{1,2}$"
+
+  # ┌────────────────────────────────────────────────────────────────────────────┐
+  # │ SECCIÓN: OCIR Registry                                                    │
+  # └────────────────────────────────────────────────────────────────────────────┘
+  - name: "registry_namespace"
+    type: "string"
+    required: true
+    description: "Namespace de OCIR"
+    pattern: "^[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]$"
+
+  - name: "repository_name"
+    type: "string"
+    required: false
+    default: "mi-aplicacion"
+    description: "Nombre del repositorio OCIR"
+    pattern: "^[a-z0-9/_-]+$"
+
+  - name: "image_compartment_id"
+    type: "string"
+    required: true
+    description: "OCID del compartment para imágenes"
+    sensitive: true
+    pattern: "^ocid1\\.compartment\\."
+
+  - name: "is_public_registry"
+    type: "boolean"
+    required: false
+    default: false
+    description: "Si el repositorio es público"
+
+  # ┌────────────────────────────────────────────────────────────────────────────┐
+  # │ SECCIÓN: Namespace y Seguridad K8s                                        │
+  # └────────────────────────────────────────────────────────────────────────────┘
+  - name: "kubernetes_namespace"
+    type: "string"
+    required: false
+    default: "ocir-workloads"
+    description: "Namespace de Kubernetes"
+    pattern: "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
+
+  - name: "image_pull_secret_name"
+    type: "string"
+    required: false
+    default: "ocir-pull-secret"
+    description: "Nombre del secret para pull de imágenes"
+
+  # ┌────────────────────────────────────────────────────────────────────────────┐
+  # │ SECCIÓN: Etiquetado                                                       │
+  # └────────────────────────────────────────────────────────────────────────────┘
+  - name: "tags"
+    type: "object"
+    required: false
+    description: "Etiquetas aplicadas a todos los recursos"
+    default:
+      ManagedBy: "Terraform"
+      Proyecto: "OKE-OCIR"
+      Ambiente: "Producción"
+
+  - name: "freeform_tags"
+    type: "object"
+    required: false
+    description: "Tags de forma libre"
+    default:
+      FinanceCenter: "Engineering"
+      CostCenter: "DevOps"
+
+outputs:
+  - name: "cluster_id"
+    description: "OCID del cluster OKE"
+
+  - name: "cluster_kubeconfig"
+    description: "Kubeconfig del cluster"
+    sensitive: true
+
+  - name: "ocir_repository_url"
+    description: "URL del repositorio OCIR"
+
+  - name: "kubernetes_namespace_id"
+    description: "ID del namespace Kubernetes"
+
+  - name: "vcn_id"
+    description: "OCID de la VCN"
+
+validationRules:
+  - condition: "node_memory_gb >= node_ocpus * 4"
+    message: "Se recomienda mínimo 4 GB de memoria por OCPU"
+
+  - condition: "initial_node_count >= 3"
+    message: "Se recomienda mínimo 3 nodos para alta disponibilidad"
+
+deploymentConfig:
+  estimatedCost: "medium"
+  estimatedTime: "20-30 minutos"
+  prerequisites:
+    - "CLI de OCI instalada"
+    - "Terraform >= 1.5.0"
+    - "Credenciales OCI válidas"
+    - "Límites de recursos disponibles"
