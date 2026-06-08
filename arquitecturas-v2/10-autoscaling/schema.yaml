@@ -1,0 +1,194 @@
+title: "10 - Autoscaling: Instance Pool con Escalado Automático"
+description: "Despliega una VCN con Load Balancer, Instance Pool y políticas de autoscaling basadas en CPU. Escalado automático horizontal para aplicaciones web de alta disponibilidad."
+schemaVersion: 1.1.0
+version: "20260411"
+locale: "es"
+
+logoUrl: "https://raw.githubusercontent.com/jesmonsa/oracle-cloud-latam/main/docs/logo.png"
+
+variableGroups:
+  - title: "Información del Tenancy"
+    visible: false
+    variables:
+      - tenancy_ocid
+      - region
+      - current_user_ocid
+      - fingerprint
+      - private_key_path
+
+  - title: "Configuración General"
+    visible: true
+    variables:
+      - compartment_ocid
+      - proyecto
+      - ambiente
+      - propietario
+
+  - title: "Configuración de Red (VCN)"
+    visible: true
+    variables:
+      - vcn_cidr
+      - subnet_publica_cidr
+      - subnet_privada_cidr
+
+  - title: "Configuración de Cómputo"
+    visible: true
+    variables:
+      - ssh_public_key
+      - shape_webserver
+      - ocpus_webserver
+      - memoria_webserver_gb
+
+  - title: "Autoscaling"
+    visible: true
+    variables:
+      - pool_tamano_inicial
+      - pool_tamano_minimo
+      - pool_tamano_maximo
+      - umbral_cpu_scale_out
+      - umbral_cpu_scale_in
+      - cooldown_segundos
+
+  - title: "Seguridad"
+    visible: true
+    variables:
+      - ssh_cidr_permitido
+      - habilitar_nsg
+
+variables:
+  compartment_ocid:
+    type: oci:identity:compartment:id
+    title: "Compartment de Destino"
+    description: "Compartment donde se crearán todos los recursos"
+    required: true
+
+  proyecto:
+    type: string
+    title: "Nombre del Proyecto"
+    description: "Prefijo para todos los recursos. Minúsculas, máx 12 caracteres"
+    default: "autoscale"
+    required: true
+    pattern: "^[a-z][a-z0-9-]{1,11}$"
+
+  ambiente:
+    type: enum
+    title: "Ambiente de Despliegue"
+    description: "Selecciona el ambiente"
+    enum:
+      - "produccion"
+      - "staging"
+      - "desarrollo"
+    default: "desarrollo"
+    required: true
+
+  propietario:
+    type: string
+    title: "Propietario"
+    description: "E-mail o nombre del responsable"
+    default: "admin"
+    required: true
+
+  vcn_cidr:
+    type: string
+    title: "CIDR de la VCN"
+    description: "Rango de direcciones RFC1918 para la red virtual"
+    default: "10.0.0.0/16"
+    required: true
+
+  subnet_publica_cidr:
+    type: string
+    title: "CIDR de la Subred Pública (Load Balancer)"
+    description: "Rango dentro de la VCN para la subred pública"
+    default: "10.0.0.0/24"
+    required: true
+
+  subnet_privada_cidr:
+    type: string
+    title: "CIDR de la Subred Privada (Instance Pool)"
+    description: "Rango dentro de la VCN para la subred privada"
+    default: "10.0.1.0/24"
+    required: true
+
+  ssh_public_key:
+    type: string
+    title: "Llave Pública SSH"
+    description: "Pega tu llave pública SSH (ssh-rsa o ssh-ed25519)"
+    required: true
+
+  shape_webserver:
+    type: oci:core:instanceshape:name
+    title: "Shape del Servidor"
+    description: "Shape Flex recomendado. VM.Standard.E4.Flex es elegible para Always Free Tier"
+    default: "VM.Standard.E4.Flex"
+    required: true
+    dependsOn:
+      compartmentId: compartment_ocid
+
+  ocpus_webserver:
+    type: number
+    title: "OCPUs"
+    description: "1 OCPU = Always Free elegible"
+    default: 1
+    required: true
+
+  memoria_webserver_gb:
+    type: number
+    title: "Memoria RAM (GB)"
+    description: "RAM en GB (ratio válido: 1-64 GB por OCPU)"
+    default: 8
+    required: true
+
+  pool_tamano_inicial:
+    type: number
+    title: "Tamaño Inicial del Pool"
+    description: "Número inicial de instancias en el Instance Pool"
+    default: 1
+    required: true
+
+  pool_tamano_minimo:
+    type: number
+    title: "Tamaño Mínimo del Pool"
+    description: "Número mínimo de instancias (scale-in)"
+    default: 1
+    required: true
+
+  pool_tamano_maximo:
+    type: number
+    title: "Tamaño Máximo del Pool"
+    description: "Número máximo de instancias (scale-out)"
+    default: 3
+    required: true
+
+  umbral_cpu_scale_out:
+    type: number
+    title: "Umbral CPU para Scale-Out (%)"
+    description: "Porcentaje de CPU para agregar instancias"
+    default: 70
+    required: true
+
+  umbral_cpu_scale_in:
+    type: number
+    title: "Umbral CPU para Scale-In (%)"
+    description: "Porcentaje de CPU para reducir instancias"
+    default: 30
+    required: true
+
+  cooldown_segundos:
+    type: number
+    title: "Cooldown entre Acciones (segundos)"
+    description: "Segundos de cooldown entre acciones de escalado"
+    default: 300
+    required: true
+
+  ssh_cidr_permitido:
+    type: string
+    title: "CIDR Permitido para SSH"
+    description: "Restringe a tu IP. Ejemplo: 190.27.1.100/32. 0.0.0.0/0 solo para pruebas"
+    default: "0.0.0.0/0"
+    required: true
+
+  habilitar_nsg:
+    type: boolean
+    title: "Usar Network Security Groups"
+    description: "Recomendado: NSG ofrece seguridad más granular"
+    default: true
