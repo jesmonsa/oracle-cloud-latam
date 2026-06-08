@@ -1,0 +1,313 @@
+title: "GitOps con ArgoCD - Sincronización Continua en OKE"
+description: "Instala ArgoCD en OKE para GitOps declarativo integrado con OCI DevOps"
+informationTitle: "Información de Despliegue"
+informationDescription: "Configure ArgoCD y el repositorio Git"
+
+schemaVersion: 1.1.0
+version: "1.0.0"
+
+locale: "es"
+
+groupings:
+  - title: "Configuración OCI"
+    description: "Credenciales y región de OCI"
+    visible: true
+    variables:
+      - tenancy_ocid
+      - user_ocid
+      - fingerprint
+      - private_key_path
+      - region
+      - compartment_id
+
+  - title: "Cluster Kubernetes"
+    description: "Información del cluster OKE existente"
+    visible: true
+    variables:
+      - oke_cluster_id
+      - oke_cluster_name
+
+  - title: "Configuración de ArgoCD"
+    description: "Parámetros de instalación de ArgoCD"
+    visible: true
+    variables:
+      - argocd_namespace
+      - argocd_version
+      - helm_chart_version
+      - enable_ingress
+      - ingress_class_name
+      - replica_count
+      - enable_ha
+
+  - title: "Repositorio Git"
+    description: "Configuración del repositorio a sincronizar"
+    visible: true
+    variables:
+      - repository_url
+      - repository_branch
+      - repository_username
+      - repository_token
+
+  - title: "Sincronización"
+    description: "Políticas de sincronización automática"
+    visible: true
+    variables:
+      - enable_auto_sync
+      - enable_self_heal
+      - sync_interval
+
+  - title: "Notificaciones"
+    description: "Configuración de alertas y notificaciones"
+    visible: true
+    variables:
+      - enable_notifications
+      - notification_slack_webhook
+      - notification_slack_channel
+
+  - title: "Seguridad"
+    description: "RBAC y políticas de acceso"
+    visible: true
+    variables:
+      - enable_rbac
+
+  - title: "Monitoreo"
+    description: "Integración con OCI Monitoring"
+    visible: true
+    variables:
+      - enable_monitoring
+
+  - title: "Tags"
+    description: "Tags para identificar recursos"
+    visible: false
+    variables:
+      - tags
+
+variables:
+  tenancy_ocid:
+    type: string
+    title: "Tenancy OCID"
+    description: "OCID del tenancy de OCI"
+    required: true
+
+  user_ocid:
+    type: string
+    title: "User OCID"
+    description: "OCID del usuario de OCI"
+    required: true
+
+  fingerprint:
+    type: string
+    title: "API Fingerprint"
+    description: "Fingerprint de la clave pública"
+    required: true
+
+  private_key_path:
+    type: string
+    title: "Private Key Path"
+    description: "Ruta a la clave privada"
+    default: "~/.oci/oci_api_key.pem"
+    required: true
+
+  region:
+    type: enum
+    title: "Región OCI"
+    description: "Región donde está el cluster OKE"
+    enum:
+      - "us-phoenix-1"
+      - "us-ashburn-1"
+      - "eu-frankfurt-1"
+      - "uk-london-1"
+      - "ap-singapore-1"
+      - "ap-sydney-1"
+    default: "us-phoenix-1"
+    required: true
+
+  compartment_id:
+    type: string
+    title: "Compartment OCID"
+    description: "OCID del compartment"
+    required: true
+
+  oke_cluster_id:
+    type: string
+    title: "OKE Cluster OCID"
+    description: "OCID del cluster OKE existente"
+    required: true
+
+  oke_cluster_name:
+    type: string
+    title: "OKE Cluster Name"
+    description: "Nombre del cluster OKE"
+    required: true
+
+  argocd_namespace:
+    type: string
+    title: "ArgoCD Namespace"
+    description: "Namespace donde instalar ArgoCD"
+    default: "argocd"
+    required: false
+
+  argocd_version:
+    type: string
+    title: "ArgoCD Version"
+    description: "Versión de ArgoCD a instalar"
+    default: "v2.10.0"
+    required: false
+
+  helm_chart_version:
+    type: string
+    title: "Helm Chart Version"
+    description: "Versión del Helm chart de ArgoCD"
+    default: "6.0.0"
+    required: false
+
+  enable_ingress:
+    type: boolean
+    title: "Habilitar Ingress"
+    description: "Crear Ingress para acceso a ArgoCD"
+    default: true
+    required: false
+
+  ingress_class_name:
+    type: string
+    title: "Ingress Class"
+    description: "Clase Ingress a usar (nginx, istio, etc.)"
+    default: "nginx"
+    required: false
+
+  replica_count:
+    type: number
+    title: "Replica Count"
+    description: "Número de réplicas de ArgoCD Server"
+    minimum: 1
+    maximum: 5
+    default: 1
+    required: false
+
+  enable_ha:
+    type: boolean
+    title: "Alta Disponibilidad"
+    description: "Habilitar HA para ArgoCD"
+    default: false
+    required: false
+
+  repository_url:
+    type: string
+    title: "Repository URL"
+    description: "URL del repositorio Git (HTTPS o SSH)"
+    required: true
+
+  repository_branch:
+    type: string
+    title: "Repository Branch"
+    description: "Rama a sincronizar"
+    default: "main"
+    required: false
+
+  repository_username:
+    type: string
+    title: "Repository Username"
+    description: "Usuario para autenticación (dejar vacío para SSH)"
+    required: false
+
+  repository_token:
+    type: string
+    title: "Repository Token"
+    description: "Token de acceso personal o contraseña"
+    required: false
+
+  enable_auto_sync:
+    type: boolean
+    title: "Auto Sync"
+    description: "Sincronizar automáticamente cambios"
+    default: true
+    required: false
+
+  enable_self_heal:
+    type: boolean
+    title: "Self Heal"
+    description: "Auto-corrección de cambios manuales"
+    default: true
+    required: false
+
+  sync_interval:
+    type: number
+    title: "Sync Interval (seconds)"
+    description: "Intervalo de sincronización en segundos"
+    default: 180
+    required: false
+
+  enable_rbac:
+    type: boolean
+    title: "RBAC"
+    description: "Habilitar control de acceso basado en roles"
+    default: true
+    required: false
+
+  enable_notifications:
+    type: boolean
+    title: "Notificaciones"
+    description: "Habilitar notificaciones de sincronización"
+    default: true
+    required: false
+
+  notification_slack_webhook:
+    type: string
+    title: "Slack Webhook URL"
+    description: "URL de webhook de Slack para notificaciones"
+    required: false
+
+  notification_slack_channel:
+    type: string
+    title: "Slack Channel"
+    description: "Canal de Slack para notificaciones"
+    default: "#devops"
+    required: false
+
+  enable_monitoring:
+    type: boolean
+    title: "Monitoreo OCI"
+    description: "Integrar OCI Monitoring"
+    default: true
+    required: false
+
+  tags:
+    type: map
+    title: "Tags"
+    description: "Tags para identificar recursos"
+    default:
+      Architecture: "GitOps-ArgoCD"
+      Terraform: "true"
+      Purpose: "Continuous-Deployment"
+    required: false
+
+outputs:
+  argocd_namespace:
+    title: "ArgoCD Namespace"
+    type: string
+    visible: true
+
+  argocd_server_url:
+    title: "ArgoCD Server URL"
+    type: string
+    visible: true
+
+  argocd_admin_password:
+    title: "ArgoCD Admin Password"
+    type: string
+    visible: false
+
+  argocd_access_instructions:
+    title: "Instrucciones de Acceso"
+    type: object
+    visible: true
+
+  oke_cluster_info:
+    title: "Información del Cluster OKE"
+    type: object
+    visible: true
+
+  helm_release_status:
+    title: "Estado del Helm Release"
+    type: string
+    visible: true
