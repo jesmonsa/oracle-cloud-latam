@@ -1,0 +1,167 @@
+title: "Track OKE — 01: Cluster Básico (Flannel CNI)"
+description: "Despliega un cluster OKE con Flannel CNI, Node Pool Flex en subnet privada, y 3 subnets dedicadas (API, LB, Nodes). Primera lección del track Kubernetes en OCI."
+schemaVersion: 1.1.0
+version: "20260411"
+locale: "es"
+
+logoUrl: "https://raw.githubusercontent.com/jesmonsa/oracle-cloud-latam/main/docs/logo.png"
+
+variableGroups:
+  - title: "Información del Tenancy"
+    visible: false
+    variables:
+      - tenancy_ocid
+      - region
+      - current_user_ocid
+      - fingerprint
+      - private_key_path
+
+  - title: "Configuración General"
+    visible: true
+    variables:
+      - compartment_ocid
+      - proyecto
+      - ambiente
+      - propietario
+
+  - title: "Configuración de Red"
+    visible: true
+    variables:
+      - vcn_cidr
+      - subnet_api_cidr
+      - subnet_lb_cidr
+      - subnet_nodepool_cidr
+
+  - title: "Configuración de Kubernetes"
+    visible: true
+    variables:
+      - k8s_version
+      - node_pool_size
+      - node_shape
+      - node_ocpus
+      - node_memoria_gb
+      - ssh_public_key
+
+  - title: "Red Interna K8s (Flannel)"
+    visible: true
+    variables:
+      - pods_cidr
+      - services_cidr
+
+variables:
+  compartment_ocid:
+    type: oci:identity:compartment:id
+    title: "Compartment de Destino"
+    description: "Compartment donde se crearán el cluster OKE y recursos de red"
+    required: true
+
+  proyecto:
+    type: string
+    title: "Nombre del Proyecto"
+    description: "Prefijo para todos los recursos. Minúsculas, máx 12 caracteres"
+    default: "oke-basico"
+    required: true
+    pattern: "^[a-z][a-z0-9-]{1,11}$"
+
+  ambiente:
+    type: enum
+    title: "Ambiente de Despliegue"
+    enum:
+      - "produccion"
+      - "staging"
+      - "desarrollo"
+    default: "desarrollo"
+    required: true
+
+  propietario:
+    type: string
+    title: "Propietario"
+    description: "E-mail o nombre del responsable"
+    default: "admin"
+    required: true
+
+  vcn_cidr:
+    type: string
+    title: "CIDR de la VCN"
+    default: "10.0.0.0/16"
+    required: true
+
+  subnet_api_cidr:
+    type: string
+    title: "CIDR Subnet API Endpoint"
+    description: "Subnet pública para el K8s API endpoint"
+    default: "10.0.0.0/28"
+    required: true
+
+  subnet_lb_cidr:
+    type: string
+    title: "CIDR Subnet Load Balancer"
+    description: "Subnet pública donde OKE crea Load Balancers"
+    default: "10.0.1.0/24"
+    required: true
+
+  subnet_nodepool_cidr:
+    type: string
+    title: "CIDR Subnet Node Pool"
+    description: "Subnet privada para los worker nodes"
+    default: "10.0.10.0/24"
+    required: true
+
+  k8s_version:
+    type: string
+    title: "Versión de Kubernetes"
+    description: "Versión para cluster y node pool"
+    default: "v1.32.1"
+    required: true
+
+  node_pool_size:
+    type: number
+    title: "Cantidad de Workers"
+    description: "Número de nodos en el pool (2 para HA)"
+    default: 2
+    minimum: 1
+    maximum: 5
+    required: true
+
+  node_shape:
+    type: oci:core:instanceshape:name
+    title: "Shape de Workers"
+    description: "VM.Standard.E4.Flex es elegible para Always Free Tier"
+    default: "VM.Standard.E4.Flex"
+    required: true
+    dependsOn:
+      compartmentId: compartment_ocid
+
+  node_ocpus:
+    type: number
+    title: "OCPUs por Worker"
+    default: 1
+    minimum: 1
+    required: true
+
+  node_memoria_gb:
+    type: number
+    title: "Memoria RAM por Worker (GB)"
+    default: 8
+    minimum: 1
+    required: true
+
+  ssh_public_key:
+    type: string
+    title: "Llave Pública SSH"
+    description: "Para acceso SSH a los worker nodes (debug)"
+    required: true
+
+  pods_cidr:
+    type: string
+    title: "CIDR de Pods (Flannel)"
+    description: "Rango de IPs para pods. No debe solaparse con la VCN"
+    default: "10.244.0.0/16"
+    required: true
+
+  services_cidr:
+    type: string
+    title: "CIDR de Services K8s"
+    description: "Rango de IPs para ClusterIP services"
+    default: "10.96.0.0/16"
+    required: true

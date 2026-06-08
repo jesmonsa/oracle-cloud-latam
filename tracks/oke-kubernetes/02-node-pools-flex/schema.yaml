@@ -1,0 +1,211 @@
+title: "Track OKE — 02: Node Pools Flex (E4 x86 + A1 ARM)"
+description: "Despliega un cluster OKE con 2 Node Pools heterogéneos: E4 Flex (x86) y A1 Flex (ARM/Ampere). Demuestra clusters multi-arquitectura con Flannel CNI."
+schemaVersion: 1.1.0
+version: "20260412"
+locale: "es"
+
+logoUrl: "https://raw.githubusercontent.com/jesmonsa/oracle-cloud-latam/main/docs/logo.png"
+
+variableGroups:
+  - title: "Información del Tenancy"
+    visible: false
+    variables:
+      - tenancy_ocid
+      - region
+      - current_user_ocid
+      - fingerprint
+      - private_key_path
+
+  - title: "Configuración General"
+    visible: true
+    variables:
+      - compartment_ocid
+      - proyecto
+      - ambiente
+      - propietario
+
+  - title: "Configuración de Red"
+    visible: true
+    variables:
+      - vcn_cidr
+      - subnet_api_cidr
+      - subnet_lb_cidr
+      - subnet_nodepool_cidr
+
+  - title: "Kubernetes"
+    visible: true
+    variables:
+      - k8s_version
+      - ssh_public_key
+
+  - title: "Node Pool x86 (E4 Flex)"
+    visible: true
+    variables:
+      - np_x86_size
+      - np_x86_shape
+      - np_x86_ocpus
+      - np_x86_memoria_gb
+
+  - title: "Node Pool ARM (A1 Flex / Ampere)"
+    visible: true
+    variables:
+      - np_arm_size
+      - np_arm_shape
+      - np_arm_ocpus
+      - np_arm_memoria_gb
+
+  - title: "Red Interna K8s (Flannel)"
+    visible: true
+    variables:
+      - pods_cidr
+      - services_cidr
+
+variables:
+  compartment_ocid:
+    type: oci:identity:compartment:id
+    title: "Compartment de Destino"
+    description: "Compartment donde se crearán el cluster OKE y recursos de red"
+    required: true
+
+  proyecto:
+    type: string
+    title: "Nombre del Proyecto"
+    description: "Prefijo para todos los recursos. Minúsculas, máx 12 caracteres"
+    default: "oke-flex"
+    required: true
+    pattern: "^[a-z][a-z0-9-]{1,11}$"
+
+  ambiente:
+    type: enum
+    title: "Ambiente de Despliegue"
+    enum:
+      - "produccion"
+      - "staging"
+      - "desarrollo"
+    default: "desarrollo"
+    required: true
+
+  propietario:
+    type: string
+    title: "Propietario"
+    description: "E-mail o nombre del responsable"
+    default: "admin"
+    required: true
+
+  vcn_cidr:
+    type: string
+    title: "CIDR de la VCN"
+    default: "10.0.0.0/16"
+    required: true
+
+  subnet_api_cidr:
+    type: string
+    title: "CIDR Subnet API Endpoint"
+    description: "Subnet pública para el K8s API endpoint"
+    default: "10.0.0.0/28"
+    required: true
+
+  subnet_lb_cidr:
+    type: string
+    title: "CIDR Subnet Load Balancer"
+    description: "Subnet pública donde OKE crea Load Balancers"
+    default: "10.0.1.0/24"
+    required: true
+
+  subnet_nodepool_cidr:
+    type: string
+    title: "CIDR Subnet Node Pools"
+    description: "Subnet privada compartida por ambos node pools"
+    default: "10.0.10.0/24"
+    required: true
+
+  k8s_version:
+    type: string
+    title: "Versión de Kubernetes"
+    description: "Versión para cluster y ambos node pools"
+    default: "v1.32.1"
+    required: true
+
+  np_x86_size:
+    type: number
+    title: "Workers x86 (E4 Flex)"
+    description: "Cantidad de nodos x86 en el pool"
+    default: 1
+    minimum: 1
+    maximum: 3
+    required: true
+
+  np_x86_shape:
+    type: oci:core:instanceshape:name
+    title: "Shape x86"
+    description: "VM.Standard.E4.Flex — AMD EPYC x86_64"
+    default: "VM.Standard.E4.Flex"
+    required: true
+    dependsOn:
+      compartmentId: compartment_ocid
+
+  np_x86_ocpus:
+    type: number
+    title: "OCPUs por Worker x86"
+    default: 1
+    minimum: 1
+    required: true
+
+  np_x86_memoria_gb:
+    type: number
+    title: "RAM por Worker x86 (GB)"
+    default: 8
+    minimum: 1
+    required: true
+
+  np_arm_size:
+    type: number
+    title: "Workers ARM (A1 Flex)"
+    description: "Cantidad de nodos ARM en el pool"
+    default: 1
+    minimum: 1
+    maximum: 3
+    required: true
+
+  np_arm_shape:
+    type: oci:core:instanceshape:name
+    title: "Shape ARM"
+    description: "VM.Standard.A1.Flex — Ampere Altra aarch64"
+    default: "VM.Standard.A1.Flex"
+    required: true
+    dependsOn:
+      compartmentId: compartment_ocid
+
+  np_arm_ocpus:
+    type: number
+    title: "OCPUs por Worker ARM"
+    default: 1
+    minimum: 1
+    required: true
+
+  np_arm_memoria_gb:
+    type: number
+    title: "RAM por Worker ARM (GB)"
+    default: 6
+    minimum: 1
+    required: true
+
+  ssh_public_key:
+    type: string
+    title: "Llave Pública SSH"
+    description: "Para acceso SSH a los worker nodes (debug)"
+    required: true
+
+  pods_cidr:
+    type: string
+    title: "CIDR de Pods (Flannel)"
+    description: "Rango de IPs para pods. No debe solaparse con la VCN"
+    default: "10.244.0.0/16"
+    required: true
+
+  services_cidr:
+    type: string
+    title: "CIDR de Services K8s"
+    description: "Rango de IPs para ClusterIP services"
+    default: "10.96.0.0/16"
+    required: true
