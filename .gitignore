@@ -1,0 +1,195 @@
+# ╔══════════════════════════════════════════════════════════════════════════════╗
+# ║  .gitignore — Oracle Cloud LATAM Reference Architectures                   ║
+# ║  Protección de credenciales, secretos y archivos temporales                ║
+# ╚══════════════════════════════════════════════════════════════════════════════╝
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  CREDENCIALES Y SECRETOS (CRÍTICO — NUNCA subir)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Terraform variables con valores reales (SIEMPRE usar .example como plantilla)
+terraform.tfvars
+*.auto.tfvars
+
+# Llaves privadas y certificados
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+id_rsa
+id_ed25519
+*.ppk
+
+# Llaves públicas SSH (pueden contener info del usuario)
+# Nota: ssh_public_key se pasa como variable, no como archivo en el repo
+*.pub
+
+# OCI CLI configuración
+.oci/
+oci_api_key*.pem
+
+# Archivos de ambiente con secretos
+.env
+.env.*
+!.env.example
+
+# Wallets de base de datos Oracle
+wallet_*.zip
+Wallet_*/
+cwallet.sso
+ewallet.p12
+tnsnames.ora
+sqlnet.ora
+ojdbc.properties
+
+# Backend config con credenciales S3 (Remote State)
+backend.hcl
+s3_credentials
+**/backend.hcl
+**/s3_credentials
+
+# Kubeconfig con tokens
+kubeconfig
+.kube/
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  TERRAFORM — Estado y archivos generados
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Estado local (NUNCA subir — contiene outputs sensibles)
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+
+# Directorio de plugins y proveedores
+.terraform/
+.terraform.lock.hcl
+
+# Plan files (pueden contener secretos en outputs)
+*.tfplan
+*.plan
+tfplan
+
+# Crash logs
+crash.log
+crash.*.log
+
+# Override files (configuración local del desarrollador)
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  SISTEMA OPERATIVO
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# Linux
+*~
+.directory
+.Trash-*
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  IDEs Y EDITORES
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Visual Studio Code
+.vscode/
+*.code-workspace
+
+# JetBrains (IntelliJ, WebStorm, PyCharm)
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# Vim / Neovim
+*.swp
+*.swo
+*.swn
+Session.vim
+.netrwhist
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Emacs
+\#*\#
+.#*
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  LOGS Y ARCHIVOS TEMPORALES
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Logs generales
+*.log
+logs/
+
+# Archivos temporales
+*.tmp
+*.temp
+*.bak
+*.orig
+*.swp
+
+# Validación
+validation.log
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  ARCHIVOS DE BUILD Y DISTRIBUCIÓN
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Zips generados para Resource Manager
+dist/
+*.zip
+!docs/*.zip
+
+# Node modules (si se usan scripts de CI/CD)
+node_modules/
+
+# Python (si se usan scripts auxiliares)
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  EXCEPCIONES EXPLÍCITAS (archivos que SÍ deben subirse)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Plantillas de variables (sin credenciales reales)
+!terraform.tfvars.example
+!*.tfvars.example
+
+# Documentación
+!docs/**
+!*.md
+
+# Esquemas de Resource Manager
+!schema.yaml
+
+# Scripts de utilidad
+!scripts/**
+
+# GitHub workflows
+!.github/**

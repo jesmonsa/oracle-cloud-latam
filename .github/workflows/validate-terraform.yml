@@ -1,0 +1,70 @@
+name: Validar Terraform
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    name: Terraform Validate & Format
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arquitectura:
+          - arquitecturas/01-webserver-simple
+          - arquitecturas/02-alta-disponibilidad-multi-ad
+          - arquitecturas/02a-alta-disponibilidad-fault-domain
+          - arquitecturas/03-load-balancer
+          - arquitecturas/04-arquitectura-segura-bastion
+          - arquitecturas/04a-arquitectura-segura-nsg
+          - arquitecturas/05-filesystem-compartido
+          - arquitecturas/05a-filesystem-compartido-nsg
+          - arquitecturas/06-block-volumes
+          - arquitecturas/07-base-de-datos
+          - arquitecturas/07a-base-de-datos-dataguard
+          - arquitecturas/08-peering-local
+          - arquitecturas/09-peering-remoto
+          - arquitecturas/09a-disaster-recovery-cross-region/09a-peering-remoto-dataguard
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "~1.9"
+
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive
+        working-directory: ${{ matrix.arquitectura }}
+
+      - name: Terraform Init
+        run: terraform init -backend=false
+        working-directory: ${{ matrix.arquitectura }}
+
+      - name: Terraform Validate
+        run: terraform validate
+        working-directory: ${{ matrix.arquitectura }}
+
+  tflint:
+    name: TFLint Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: terraform-linters/setup-tflint@v4
+      - name: Run TFLint
+        run: tflint --recursive
+
+  format-modules:
+    name: Modules Formatting Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "~1.9"
+      - name: Check Modulos Formatting
+        run: terraform fmt -check -recursive modulos/
