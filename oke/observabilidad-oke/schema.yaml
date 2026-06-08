@@ -1,0 +1,284 @@
+---
+# ╔══════════════════════════════════════════════════════════════════════════════╗
+# ║  Schema de Validación - OKE Observabilidad Completa                         ║
+# ║  Define estructura de entrada y validaciones de variables                    ║
+# ╚══════════════════════════════════════════════════════════════════════════════╝
+
+schemaVersion: "2.0"
+title: "Arquitectura OKE Observabilidad Completa"
+description: "Pila de observabilidad con Prometheus, Grafana, Loki e integración con OCI Monitoring"
+
+inputs:
+  # ┌────────────────────────────────────────────────────────────────────────────┐
+  # │ SECCIÓN: Autenticación OCI                                                │
+  # └────────────────────────────────────────────────────────────────────────────┘
+  - name: "tenancy_ocid"
+    type: "string"
+    required: true
+    description: "OCID del Tenancy"
+    sensitive: true
+
+  - name: "current_user_ocid"
+    type: "string"
+    required: true
+    description: "OCID del usuario IAM"
+    sensitive: true
+
+  - name: "fingerprint"
+    type: "string"
+    required: true
+    description: "Fingerprint de clave API"
+    sensitive: true
+
+  - name: "private_key_path"
+    type: "string"
+    required: true
+    description: "Ruta a archivo de clave privada"
+    sensitive: true
+
+  - name: "region"
+    type: "string"
+    required: false
+    default: "sa-santiago-1"
+    description: "Región OCI de despliegue"
+
+  - name: "oci_monitoring_compartment_id"
+    type: "string"
+    required: true
+    description: "OCID del compartment para métricas"
+    sensitive: true
+
+  # ┌────────────────────────────────────────────────────────────────────────────┐
+  # │ SECCIÓN: Configuración del Cluster OKE                                    │
+  # └────────────────────────────────────────────────────────────────────────────┘
+  - name: "cluster_name"
+    type: "string"
+    required: false
+    default: "oke-observabilidad-cluster"
+    description: "Nombre del cluster OKE"
+
+  - name: "kubernetes_version"
+    type: "string"
+    required: false
+    default: "v1.29"
+    description: "Versión de Kubernetes"
+
+  - name: "initial_node_count"
+    type: "integer"
+    required: false
+    default: 3
+    description: "Número inicial de nodos"
+    minimum: 3
+    maximum: 100
+
+  - name: "node_shape"
+    type: "string"
+    required: false
+    default: "VM.Standard.E4.Flex"
+    description: "Shape de nodos (requiere mayor capacity para observabilidad)"
+
+  - name: "node_ocpus"
+    type: "integer"
+    required: false
+    default: 4
+    description: "OCPUs por nodo (mínimo 4 recomendado)"
+    minimum: 4
+
+  - name: "node_memory_gb"
+    type: "integer"
+    required: false
+    default: 32
+    description: "Memoria en GB por nodo (mínimo 32 recomendado)"
+    minimum: 32
+
+  # ┌────────────────────────────────────────────────────────────────────────────┐
+  # │ SECCIÓN: Prometheus                                                       │
+  # └────────────────────────────────────────────────────────────────────────────┘
+  - name: "enable_prometheus"
+    type: "boolean"
+    required: false
+    default: true
+    description: "Habilitar Prometheus"
+
+  - name: "prometheus_namespace"
+    type: "string"
+    required: false
+    default: "monitoring"
+    description: "Namespace para Prometheus"
+
+  - name: "prometheus_retention_days"
+    type: "integer"
+    required: false
+    default: 15
+    description: "Días de retención de datos en Prometheus"
+    minimum: 1
+    maximum: 365
+
+  - name: "prometheus_storage_size_gb"
+    type: "integer"
+    required: false
+    default: 50
+    description: "Tamaño del almacenamiento de Prometheus"
+    minimum: 10
+    maximum: 1000
+
+  # ┌────────────────────────────────────────────────────────────────────────────┐
+  # │ SECCIÓN: Grafana                                                          │
+  # └────────────────────────────────────────────────────────────────────────────┘
+  - name: "enable_grafana"
+    type: "boolean"
+    required: false
+    default: true
+    description: "Habilitar Grafana"
+
+  - name: "grafana_namespace"
+    type: "string"
+    required: false
+    default: "monitoring"
+    description: "Namespace para Grafana"
+
+  - name: "grafana_admin_password"
+    type: "string"
+    required: true
+    description: "Contraseña del admin de Grafana"
+    sensitive: true
+    minLength: 8
+
+  - name: "grafana_storage_size_gb"
+    type: "integer"
+    required: false
+    default: 10
+    description: "Tamaño del almacenamiento de Grafana"
+    minimum: 5
+    maximum: 100
+
+  - name: "enable_grafana_dashboards"
+    type: "boolean"
+    required: false
+    default: true
+    description: "Desplegar dashboards preconfigurados"
+
+  # ┌────────────────────────────────────────────────────────────────────────────┐
+  # │ SECCIÓN: Loki                                                             │
+  # └────────────────────────────────────────────────────────────────────────────┘
+  - name: "enable_loki"
+    type: "boolean"
+    required: false
+    default: true
+    description: "Habilitar Loki para log aggregation"
+
+  - name: "loki_namespace"
+    type: "string"
+    required: false
+    default: "monitoring"
+    description: "Namespace para Loki"
+
+  - name: "loki_storage_size_gb"
+    type: "integer"
+    required: false
+    default: 30
+    description: "Tamaño del almacenamiento de Loki"
+    minimum: 10
+    maximum: 500
+
+  - name: "loki_retention_days"
+    type: "integer"
+    required: false
+    default: 7
+    description: "Días de retención de logs en Loki"
+    minimum: 1
+    maximum: 365
+
+  # ┌────────────────────────────────────────────────────────────────────────────┐
+  # │ SECCIÓN: AlertManager                                                     │
+  # └────────────────────────────────────────────────────────────────────────────┘
+  - name: "enable_alert_manager"
+    type: "boolean"
+    required: false
+    default: true
+    description: "Habilitar AlertManager"
+
+  - name: "alertmanager_storage_size_gb"
+    type: "integer"
+    required: false
+    default: 5
+    description: "Tamaño del almacenamiento de AlertManager"
+    minimum: 1
+
+  # ┌────────────────────────────────────────────────────────────────────────────┐
+  # │ SECCIÓN: Service/Pod Monitors                                             │
+  # └────────────────────────────────────────────────────────────────────────────┘
+  - name: "enable_servicemonitor"
+    type: "boolean"
+    required: false
+    default: true
+    description: "Habilitar ServiceMonitor CRDs para autodiscovery"
+
+  - name: "enable_podmonitor"
+    type: "boolean"
+    required: false
+    default: true
+    description: "Habilitar PodMonitor CRDs para autodiscovery"
+
+  # ┌────────────────────────────────────────────────────────────────────────────┐
+  # │ SECCIÓN: OCI Monitoring Integration                                       │
+  # └────────────────────────────────────────────────────────────────────────────┘
+  - name: "oci_monitoring_enabled"
+    type: "boolean"
+    required: false
+    default: true
+    description: "Habilitar integración con OCI Monitoring"
+
+outputs:
+  - name: "cluster_id"
+    description: "OCID del cluster OKE"
+
+  - name: "monitoring_namespace"
+    description: "Namespace de observabilidad"
+
+  - name: "prometheus_url"
+    description: "URL de acceso a Prometheus"
+
+  - name: "grafana_url"
+    description: "URL de acceso a Grafana"
+
+  - name: "loki_url"
+    description: "URL de acceso a Loki"
+
+  - name: "prometheus_storage_size"
+    description: "Tamaño del almacenamiento de Prometheus"
+
+  - name: "retention_configuration"
+    description: "Configuración de retención de datos"
+
+  - name: "dashboards_imported"
+    description: "Dashboards de Grafana disponibles"
+
+validationRules:
+  - condition: "node_ocpus >= 4"
+    message: "Se recomienda mínimo 4 OCPUs por nodo para observabilidad"
+
+  - condition: "node_memory_gb >= 32"
+    message: "Se recomienda mínimo 32 GB de memoria por nodo"
+
+  - condition: "initial_node_count >= 3"
+    message: "Se recomienda mínimo 3 nodos para alta disponibilidad"
+
+  - condition: "prometheus_storage_size_gb >= 30"
+    message: "Se recomienda mínimo 30 GB para almacenamiento de Prometheus"
+
+deploymentConfig:
+  estimatedCost: "high"
+  estimatedTime: "25-30 minutos"
+  prerequisites:
+    - "CLI de OCI instalada"
+    - "Terraform >= 1.5.0"
+    - "Helm 3.0+ instalado"
+    - "Credenciales OCI válidas"
+    - "Nodos con suficiente capacidad (4+ OCPUs, 32+ GB)"
+  components:
+    - "OKE Cluster Enhanced"
+    - "Prometheus Stack (Prometheus, Grafana, AlertManager)"
+    - "Loki + Promtail"
+    - "OCI Monitoring Integration"
+    - "Dashboards Preconfigurados"
