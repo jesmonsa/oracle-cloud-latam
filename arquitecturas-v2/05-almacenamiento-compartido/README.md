@@ -130,7 +130,7 @@ Esta arquitectura es esencial para aplicaciones web que requieren:
 
 ```
 Recurso                          | Cantidad | Costo Unitario  | Costo Total
-─────────────────────────────────────────────────────────────────────────
+───────────────────────────────────────────────────────────────────────
 VCN + Subnets + IGW + NAT        | -        | Gratuito        | $0
 Service Gateway                  | 1        | Gratuito        | $0
 Load Balancer Flexible 10 Mbps  | 1        | Gratuito*       | $0
@@ -139,7 +139,7 @@ Bastion Service                  | 1        | Gratuito        | $0
 File Storage Service 10 GB       | 1        | Gratuito*       | $0
 Mount Target NFS                 | 1        | Gratuito        | $0
 Network Security Groups          | 4        | Gratuito        | $0
-─────────────────────────────────────────────────────────────────────────
+───────────────────────────────────────────────────────────────────────
 TOTAL ESTIMADO (Always Free):    | -        | -               | $0 USD/mes
 ```
 
