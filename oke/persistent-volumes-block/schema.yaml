@@ -1,0 +1,221 @@
+# ╔══════════════════════════════════════════════════════════════════════════════╗
+# ║  PERSISTENT VOLUMES BLOCK - SCHEMA DE CONFIGURACIÓN                          ║
+# ╚══════════════════════════════════════════════════════════════════════════════╝
+
+openapi: 3.0.0
+
+info:
+  title: "OKE Block Storage Configuration Schema"
+  version: "1.0.0"
+  description: |
+    Esquema de configuración para almacenamiento persistente tipo Block
+    en Oracle Kubernetes Engine con CSI driver.
+
+paths: {}
+components:
+  schemas:
+    
+    OKEBlockStorageConfiguration:
+      type: object
+      required:
+        - tenancy_ocid
+        - current_user_ocid
+        - fingerprint
+        - private_key_path
+        - compartment_id
+      properties:
+        
+        tenancy_ocid:
+          type: string
+          description: OCID de la tenencia
+          pattern: "^ocid1\\.tenancy\\.oc1\\..+$"
+        
+        current_user_ocid:
+          type: string
+          description: OCID del usuario API
+          pattern: "^ocid1\\.user\\.oc1\\..+$"
+        
+        fingerprint:
+          type: string
+          description: Fingerprint de clave API
+          pattern: "^[a-f0-9]{2}(:[a-f0-9]{2}){15}$"
+        
+        private_key_path:
+          type: string
+          description: Ruta a clave privada API
+        
+        region:
+          type: string
+          description: Región de OCI
+          default: "sa-santiago-1"
+        
+        compartment_id:
+          type: string
+          description: OCID del compartimiento
+          pattern: "^ocid1\\.compartment\\.oc1\\..+$"
+        
+        cluster_name:
+          type: string
+          description: Nombre del clúster
+          default: "oke-block-storage"
+        
+        cluster_version:
+          type: string
+          description: Versión de Kubernetes
+          default: "1.29"
+        
+        vcn_cidr_block:
+          type: string
+          description: CIDR de la VCN
+          default: "10.2.0.0/16"
+        
+        k8s_subnet_cidr:
+          type: string
+          description: CIDR de subred Kubernetes
+          default: "10.2.1.0/24"
+        
+        worker_subnet_cidr:
+          type: string
+          description: CIDR de subred de nodos
+          default: "10.2.2.0/24"
+        
+        node_pool_size:
+          type: integer
+          description: Cantidad de nodos
+          default: 3
+          minimum: 1
+        
+        node_shape:
+          type: string
+          description: Forma de los nodos
+          default: "VM.Standard.E4.Flex"
+        
+        node_ocpus:
+          type: number
+          description: OCPUs por nodo
+          default: 2
+        
+        node_memory_gb:
+          type: number
+          description: Memoria en GB por nodo
+          default: 8
+        
+        storage_size_gb:
+          type: integer
+          description: Tamaño de volúmenes en GB
+          default: 100
+          minimum: 50
+          maximum: 16384
+        
+        vpus_per_gb:
+          type: integer
+          description: VPUs por GB (performance level)
+          default: 10
+          enum: [10, 20, 30, 40, 60]
+        
+        storage_class_name:
+          type: string
+          description: Nombre de la StorageClass
+          default: "oci-bv-standard"
+        
+        enable_cross_ad_replication:
+          type: boolean
+          description: Replicación entre ADs
+          default: true
+        
+        backup_enabled:
+          type: boolean
+          description: Backups automáticos
+          default: true
+        
+        backup_retention_days:
+          type: integer
+          description: Retención de backups en días
+          default: 30
+          minimum: 7
+          maximum: 365
+        
+        backup_schedule:
+          type: string
+          description: Cronograma de backups
+          default: "diario"
+          enum: ["diario", "semanal", "mensual"]
+        
+        enable_volume_snapshots:
+          type: boolean
+          description: Snapshots de volúmenes
+          default: true
+        
+        enable_csi_driver:
+          type: boolean
+          description: Instalar CSI driver
+          default: true
+        
+        csi_driver_version:
+          type: string
+          description: Versión del CSI driver
+          default: "1.24.0"
+        
+        enable_disaster_recovery:
+          type: boolean
+          description: Habilitar DR
+          default: false
+        
+        disaster_recovery_region:
+          type: string
+          description: Región secundaria para DR
+          default: "sa-vinhedo-1"
+        
+        enable_volume_cloning:
+          type: boolean
+          description: Clonación de volúmenes
+          default: true
+        
+        environment:
+          type: string
+          description: Ambiente
+          default: "prod"
+          enum: ["dev", "staging", "prod"]
+        
+        project_name:
+          type: string
+          description: Nombre del proyecto
+          default: "oke-block-storage"
+        
+        tags:
+          type: object
+          description: Etiquetas
+          additionalProperties:
+            type: string
+        
+        enable_monitoring:
+          type: boolean
+          description: Habilitar monitoreo
+          default: true
+        
+        enable_logging:
+          type: boolean
+          description: Habilitar logging
+          default: true
+        
+        volume_encryption_key_id:
+          type: string
+          nullable: true
+          description: OCID de clave de encriptación personalizada
+        
+        enable_volume_encryption:
+          type: boolean
+          description: Encriptación de volúmenes
+          default: true
+        
+        standby_replicas_enabled:
+          type: boolean
+          description: Réplicas standby para DR
+          default: false
+        
+        storage_reservation_gb:
+          type: integer
+          description: Reserva de storage para admin
+          default: 10
+          minimum: 5
+          maximum: 100
