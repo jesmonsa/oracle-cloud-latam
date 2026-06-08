@@ -1,0 +1,181 @@
+title: "09 - Peering Remoto: Hub-Spoke Cross-Region (DRG)"
+description: "Arquitectura Hub-Spoke con peering cross-región usando DRG. Hub en región primaria con Load Balancer, webservers y base de datos. Spoke en región secundaria con servidores backend."
+schemaVersion: 1.1.0
+version: "20260411"
+locale: "es"
+
+logoUrl: "https://raw.githubusercontent.com/jesmonsa/oracle-cloud-latam/main/docs/logo.png"
+
+variableGroups:
+  - title: "Información del Tenancy"
+    visible: false
+    variables:
+      - tenancy_ocid
+      - current_user_ocid
+      - fingerprint
+      - private_key_path
+
+  - title: "Configuración General"
+    visible: true
+    variables:
+      - compartment_ocid
+      - proyecto
+      - ambiente
+      - propietario
+
+  - title: "Configuración de Regiones"
+    visible: true
+    variables:
+      - region
+      - region2
+
+  - title: "Configuración de Red Hub (Región Primaria)"
+    visible: true
+    variables:
+      - vcn_hub_cidr
+      - subnet_hub_publica_cidr
+      - subnet_hub_privada_cidr
+
+  - title: "Configuración de Red Spoke (Región Secundaria)"
+    visible: true
+    variables:
+      - vcn_spoke_cidr
+      - subnet_spoke_backend_cidr
+
+  - title: "Configuración de Cómputo"
+    visible: true
+    variables:
+      - ssh_public_key
+      - shape_webserver
+      - ocpus_webserver
+      - memoria_webserver_gb
+
+  - title: "Configuración de Seguridad de Red"
+    visible: true
+    variables:
+      - ssh_cidr_permitido
+      - habilitar_nsg
+
+variables:
+  compartment_ocid:
+    type: oci:identity:compartment:id
+    title: "Compartment de Destino"
+    description: "Compartment donde se crearán todos los recursos"
+    required: true
+
+  proyecto:
+    type: string
+    title: "Nombre del Proyecto"
+    description: "Prefijo para recursos (máx 6 caracteres, se combina con hub/spoke)"
+    default: "rpc"
+    required: true
+    pattern: "^[a-z][a-z0-9-]{1,5}$"
+
+  ambiente:
+    type: enum
+    title: "Ambiente de Despliegue"
+    description: "Selecciona el ambiente"
+    enum:
+      - "produccion"
+      - "staging"
+      - "desarrollo"
+    default: "desarrollo"
+    required: true
+
+  propietario:
+    type: string
+    title: "Propietario"
+    description: "E-mail o nombre del responsable"
+    default: "admin"
+    required: true
+
+  region:
+    type: string
+    title: "Región Primaria (Hub)"
+    description: "Región primaria para el Hub (ej: us-ashburn-1)"
+    default: "us-ashburn-1"
+    required: true
+
+  region2:
+    type: string
+    title: "Región Secundaria (Spoke)"
+    description: "Región secundaria para el Spoke (ej: us-phoenix-1). Debe estar suscrita en el tenancy"
+    default: "us-phoenix-1"
+    required: true
+
+  vcn_hub_cidr:
+    type: string
+    title: "CIDR de la VCN Hub"
+    description: "Rango de direcciones RFC1918 para la VCN Hub"
+    default: "10.0.0.0/16"
+    required: true
+
+  subnet_hub_publica_cidr:
+    type: string
+    title: "CIDR Subnet Pública Hub"
+    description: "Rango para subnet pública Hub (Load Balancer)"
+    default: "10.0.0.0/24"
+    required: true
+
+  subnet_hub_privada_cidr:
+    type: string
+    title: "CIDR Subnet Privada Hub"
+    description: "Rango para subnet privada Hub (webserver)"
+    default: "10.0.1.0/24"
+    required: true
+
+  vcn_spoke_cidr:
+    type: string
+    title: "CIDR de la VCN Spoke"
+    description: "Rango para la VCN Spoke (NO debe solapar con Hub)"
+    default: "10.2.0.0/16"
+    required: true
+
+  subnet_spoke_backend_cidr:
+    type: string
+    title: "CIDR Subnet Backend Spoke"
+    description: "Rango para subnet privada Spoke (backend)"
+    default: "10.2.1.0/24"
+    required: true
+
+  ssh_public_key:
+    type: string
+    title: "Llave Pública SSH"
+    description: "Pega tu llave pública SSH"
+    required: true
+
+  shape_webserver:
+    type: oci:core:instanceshape:name
+    title: "Shape para Webservers y Backend"
+    description: "Shape Flex para instancias de cómputo"
+    default: "VM.Standard.E4.Flex"
+    required: true
+    dependsOn:
+      compartmentId: compartment_ocid
+
+  ocpus_webserver:
+    type: number
+    title: "OCPUs (Shapes Flex)"
+    description: "Número de OCPUs para instancias"
+    default: 1
+    required: true
+
+  memoria_webserver_gb:
+    type: number
+    title: "Memoria RAM (GB)"
+    description: "RAM en GB"
+    default: 8
+    required: true
+
+  ssh_cidr_permitido:
+    type: string
+    title: "CIDR Permitido para SSH"
+    description: "CIDR permitido para acceso SSH (recomendado: tu IP/32)"
+    default: "0.0.0.0/0"
+    required: true
+
+  habilitar_nsg:
+    type: boolean
+    title: "Usar Network Security Groups"
+    description: "Usar NSGs en lugar de Security Lists"
+    default: true

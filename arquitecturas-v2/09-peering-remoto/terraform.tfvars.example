@@ -1,0 +1,37 @@
+# ╔══════════════════════════════════════════════════════════════════════════════╗
+# ║  terraform.tfvars — Arquitectura 09: Peering Remoto (Cross-Region DRG)     ║
+# ╚══════════════════════════════════════════════════════════════════════════════╝
+
+# ─── Autenticación OCI ────────────────────────────────────────────────────────
+tenancy_ocid      = "<tu_tenancy_ocid>"
+current_user_ocid = "<tu_user_ocid>"
+fingerprint       = "<tu_fingerprint>"
+private_key_path  = "~/.oci/key.pem"
+region            = "us-ashburn-1"
+
+# ─── Proyecto ─────────────────────────────────────────────────────────────────
+compartment_ocid = "<tu_compartment_ocid>"
+proyecto         = "rpc"
+ambiente         = "desarrollo"
+propietario      = "<tu_email>"
+
+# ─── Regiones ───────────────────────────────────────────────────────────────
+# region  = "us-ashburn-1"   # (default — Hub)
+region2 = "us-phoenix-1"     # Spoke — asegúrate de que esté suscrita
+
+# ─── Red ────────────────────────────────────────────────────────────────────
+vcn_hub_cidr              = "10.0.0.0/16"
+vcn_spoke_cidr            = "10.2.0.0/16"
+subnet_hub_publica_cidr   = "10.0.0.0/24"
+subnet_hub_privada_cidr   = "10.0.1.0/24"
+subnet_spoke_backend_cidr = "10.2.1.0/24"
+
+# ─── Cómputo ─────────────────────────────────────────────────────────────────
+shape_webserver      = "VM.Standard.E4.Flex"
+ocpus_webserver      = 1
+memoria_webserver_gb = 8
+ssh_public_key       = "<tu_ssh_public_key>"
+
+# ─── Seguridad ────────────────────────────────────────────────────────────────
+habilitar_nsg      = true
+ssh_cidr_permitido = "0.0.0.0/0"
