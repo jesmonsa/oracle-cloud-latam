@@ -1,0 +1,209 @@
+title: "05 - Almacenamiento Compartido (FSS + NFS)"
+description: "Despliega una infraestructura con File Storage Service (FSS) para almacenamiento compartido en NFS, integrado con webservers privados, Load Balancer y Bastion Service."
+schemaVersion: 1.1.0
+version: "20260411"
+locale: "es"
+
+logoUrl: "https://raw.githubusercontent.com/jesmonsa/oracle-cloud-latam/main/docs/logo.png"
+
+variableGroups:
+  - title: "Información del Tenancy"
+    visible: false
+    variables:
+      - tenancy_ocid
+      - region
+      - current_user_ocid
+      - fingerprint
+      - private_key_path
+
+  - title: "Configuración General"
+    visible: true
+    variables:
+      - compartment_ocid
+      - proyecto
+      - ambiente
+      - propietario
+
+  - title: "Configuración de Red (VCN)"
+    visible: true
+    variables:
+      - vcn_cidr
+      - subnet_privada_ad1_cidr
+      - subnet_privada_ad2_cidr
+      - subnet_lb_cidr
+
+  - title: "Configuración de Cómputo"
+    visible: true
+    variables:
+      - ssh_public_key
+      - shape_webserver
+      - ocpus_webserver
+      - memoria_webserver_gb
+      - imagen_os
+
+  - title: "Configuración del Load Balancer"
+    visible: true
+    variables:
+      - lb_bandwidth_min_mbps
+      - lb_bandwidth_max_mbps
+
+  - title: "Configuración del Almacenamiento (NFS)"
+    visible: true
+    variables:
+      - nfs_ruta_exportacion
+      - nfs_punto_montaje
+
+  - title: "Configuración del Bastion"
+    visible: true
+    variables:
+      - bastion_cidr_permitidos
+
+  - title: "Seguridad"
+    visible: true
+    variables:
+      - habilitar_nsg
+      - habilitar_baseline_seguridad
+
+variables:
+  compartment_ocid:
+    type: oci:identity:compartment:id
+    title: "Compartment de Destino"
+    description: "Compartment donde se crearán todos los recursos"
+    required: true
+
+  proyecto:
+    type: string
+    title: "Nombre del Proyecto"
+    description: "Prefijo para todos los recursos. Minúsculas, máx 15 caracteres"
+    default: "fss-ha"
+    required: true
+    pattern: "^[a-z0-9-]{1,15}$"
+
+  ambiente:
+    type: enum
+    title: "Ambiente de Despliegue"
+    description: "Selecciona el ambiente"
+    enum:
+      - "produccion"
+      - "staging"
+      - "desarrollo"
+    default: "desarrollo"
+    required: true
+
+  propietario:
+    type: string
+    title: "Propietario"
+    description: "E-mail o nombre del responsable"
+    default: "admin"
+    required: true
+
+  vcn_cidr:
+    type: string
+    title: "CIDR de la VCN"
+    description: "Rango de direcciones RFC1918 para la red virtual"
+    default: "10.0.0.0/16"
+    required: true
+
+  subnet_privada_ad1_cidr:
+    type: string
+    title: "CIDR de la Subred Privada AD1"
+    description: "Rango dentro de la VCN para webservers y punto de montaje FSS en AD1"
+    default: "10.0.1.0/24"
+    required: true
+
+  subnet_privada_ad2_cidr:
+    type: string
+    title: "CIDR de la Subred Privada AD2"
+    description: "Rango dentro de la VCN para webservers en el Dominio de Disponibilidad 2"
+    default: "10.0.2.0/24"
+    required: true
+
+  subnet_lb_cidr:
+    type: string
+    title: "CIDR de la Subred Pública del Load Balancer"
+    description: "Rango dentro de la VCN para la subred pública regional del Load Balancer"
+    default: "10.0.10.0/24"
+    required: true
+
+  ssh_public_key:
+    type: string
+    title: "Llave Pública SSH"
+    description: "Pega tu llave pública SSH (ssh-rsa, ssh-ed25519 o ssh-ecdsa)"
+    required: true
+
+  shape_webserver:
+    type: oci:core:instanceshape:name
+    title: "Shape del Servidor"
+    description: "VM.Standard.E4.Flex es elegible para Always Free Tier"
+    default: "VM.Standard.E4.Flex"
+    required: true
+    dependsOn:
+      compartmentId: compartment_ocid
+
+  ocpus_webserver:
+    type: number
+    title: "OCPUs"
+    description: "1 OCPU = Always Free elegible. Rango: 1-64"
+    default: 1
+    required: true
+
+  memoria_webserver_gb:
+    type: number
+    title: "Memoria RAM (GB)"
+    description: "RAM en GB (ratio válido: 1-64 GB por OCPU)"
+    default: 8
+    required: true
+
+  imagen_os:
+    type: string
+    title: "OCID de Imagen OS (Opcional)"
+    description: "Vacío = última Oracle Linux 8 disponible"
+    default: ""
+    required: false
+
+  lb_bandwidth_min_mbps:
+    type: number
+    title: "Ancho de Banda Mínimo del LB (Mbps)"
+    description: "Ancho de banda garantizado mínimo. Rango: 10-8000 Mbps"
+    default: 10
+    required: true
+
+  lb_bandwidth_max_mbps:
+    type: number
+    title: "Ancho de Banda Máximo del LB (Mbps)"
+    description: "Ancho de banda máximo permitido. Rango: 10-8000 Mbps"
+    default: 10
+    required: true
+
+  nfs_ruta_exportacion:
+    type: string
+    title: "Ruta de Exportación NFS"
+    description: "Ruta de exportación en el File Storage Service (p. ej., /shared)"
+    default: "/shared"
+    required: true
+
+  nfs_punto_montaje:
+    type: string
+    title: "Punto de Montaje Local"
+    description: "Directorio local donde se montará el almacenamiento compartido en los webservers"
+    default: "/mnt/shared"
+    required: true
+
+  bastion_cidr_permitidos:
+    type: string
+    title: "CIDRs Permitidos para Bastion"
+    description: "CIDRs separados por comas permitidos para conectarse al Bastion (tu IP/32 recomendado). Ejemplo: 192.168.1.0/24,10.0.0.0/8"
+    default: "0.0.0.0/0"
+    required: true
+
+  habilitar_nsg:
+    type: boolean
+    title: "Usar Network Security Groups"
+    description: "Recomendado: NSG ofrece seguridad más granular"
+    default: true
+
+  habilitar_baseline_seguridad:
+    type: boolean
+    title: "Activar Baseline de Seguridad"
+    description: "Cloud Guard y auditoría. Recomendado para producción"
+    default: false
