@@ -1,0 +1,151 @@
+# ============================================================================
+# OCI Resource Manager - Schema for Streaming (Kafka)
+# ============================================================================
+
+title: "OCI Streaming - Kafka Compatible"
+
+description: |
+  Arquitectura de streaming en tiempo real con:
+  - OCI Streaming (100% Kafka compatible)
+  - Múltiples consumer functions
+  - Archival automático a Object Storage
+  - Consumer lag monitoring
+  - Costo estimado: USD 50-300/mes
+
+informational_items:
+  - name: "kafka_compatibility"
+    type: "html"
+    pre_content: |
+      <h3>Compatibilidad Kafka</h3>
+      <p><strong>OCI Streaming es 100% compatible con Kafka</strong></p>
+      <ul>
+        <li>Usa el protocolo Kafka estándar</li>
+        <li>Compatible con bibliotecas Kafka existentes</li>
+        <li>Replicación automática 3x</li>
+        <li>Retención configurable 24h - 7 días</li>
+        <li>Consumer groups nativos</li>
+      </ul>
+
+variables:
+  # Compartment
+  compartment_ocid:
+    type: oci:identity:compartment:id
+    required: true
+    title: "Compartment"
+
+  region:
+    type: oci:identity:region:name
+    required: true
+    title: "Región OCI"
+
+  # Application
+  app_name:
+    type: string
+    required: true
+    title: "Nombre de Aplicación"
+    default: "streaming-app"
+    minLength: 3
+    maxLength: 30
+
+  environment:
+    type: enum
+    required: true
+    title: "Entorno"
+    default: "dev"
+    enum:
+      - "dev"
+      - "test"
+      - "prod"
+
+  # Streaming
+  num_partitions:
+    type: integer
+    required: false
+    title: "Número de Particiones"
+    description: "1 partición = ~1 MB/s throughput"
+    default: 3
+    minimum: 1
+    maximum: 32
+
+  retention_hours:
+    type: enum
+    required: false
+    title: "Retención de Mensajes"
+    default: "24"
+    enum:
+      - "24"
+      - "72"
+      - "168"
+
+  # Consumer Functions
+  function_memory:
+    type: enum
+    required: false
+    title: "Memoria Función (MB)"
+    default: "512"
+    enum:
+      - "128"
+      - "256"
+      - "512"
+      - "1024"
+      - "2048"
+
+  function_timeout:
+    type: integer
+    required: false
+    title: "Timeout (segundos)"
+    default: 120
+    minimum: 1
+    maximum: 300
+
+  # Destinations
+  archive_bucket_name:
+    type: string
+    required: false
+    title: "Nombre Bucket Archival"
+    description: "Dejar vacío para no crear bucket"
+
+  enable_database_sink:
+    type: boolean
+    required: false
+    title: "Sink a Autonomous Database"
+    default: false
+
+  # Monitoring
+  enable_monitoring:
+    type: boolean
+    required: false
+    title: "Habilitar Monitoreo"
+    default: true
+
+  enable_detailed_logs:
+    type: boolean
+    required: false
+    title: "Logs Detallados"
+    default: true
+
+  consumer_lag_threshold:
+    type: integer
+    required: false
+    title: "Umbral Consumer Lag"
+    default: 10000
+    minimum: 100
+    maximum: 1000000
+
+outputGroups:
+  - title: "Streaming Endpoints"
+    outputs:
+      - stream_id
+      - messages_endpoint
+      - bootstrap_servers
+
+  - title: "Functions"
+    outputs:
+      - application_id
+      - archive_consumer_id
+      - process_consumer_id
+
+  - title: "Examples"
+    outputs:
+      - kafka_producer_example
+      - kafka_consumer_example
