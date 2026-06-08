@@ -1,0 +1,351 @@
+# ╔══════════════════════════════════════════════════════════════════════════════╗
+# ║  OKE Multi Node Pool — Arquitectura de Referencia                            ║
+# ║  OCI Resource Manager Schema (Terraform UI)                                   ║
+# ╚══════════════════════════════════════════════════════════════════════════════╝
+
+title: "OKE Multi Node Pool — Arquitectura de Referencia"
+
+schemaVersion: 1.2.0
+
+description: |
+  Despliegue de un cluster Kubernetes heterogéneo en Oracle Container Engine (OKE)
+  con nodos de diferentes arquitecturas: x86_64 (E4 Flex) y aarch64 (A1 Flex).
+
+  Incluye:
+  - Virtual Cloud Network con subredes segregadas
+  - Cluster Kubernetes v1.32.1 con Flannel CNI
+  - Node Pool x86 (VM.Standard.E4.Flex) para cargas de trabajo estándar
+  - Node Pool ARM (VM.Standard.A1.Flex) para optimización de costos
+  - Configuración empresarial con tags y gobernanza
+
+locale: es
+
+variableGroups:
+  # ========================================================================
+  # GRUPO 1: TENANCY (OCULTO)
+  # ========================================================================
+  - title: "Tenancy (Información de Conexión)"
+    visible: false
+    variables:
+      - tenancy_ocid
+      - current_user_ocid
+      - fingerprint
+      - private_key_path
+      - region
+      - compartment_id
+
+  # ========================================================================
+  # GRUPO 2: INFORMACIÓN GENERAL
+  # ========================================================================
+  - title: "Información General"
+    description: "Configuración básica del proyecto"
+    variables:
+      - proyecto
+      - ambiente
+      - propietario
+      - equipo_responsable
+
+  # ========================================================================
+  # GRUPO 3: RED Y CONECTIVIDAD
+  # ========================================================================
+  - title: "Configuración de Red (VCN)"
+    description: "Virtual Cloud Network y subredes"
+    variables:
+      - vcn_cidr
+      - subnet_api_cidr
+      - subnet_lb_cidr
+      - subnet_nodepool_cidr
+
+  # ========================================================================
+  # GRUPO 4: KUBERNETES
+  # ========================================================================
+  - title: "Kubernetes"
+    description: "Configuración del cluster OKE"
+    variables:
+      - kubernetes_version
+      - cluster_name
+      - pods_cidr
+      - services_cidr
+
+  # ========================================================================
+  # GRUPO 5: NODE POOL x86
+  # ========================================================================
+  - title: "Node Pool x86 (E4 Flex)"
+    description: "Nodos con arquitectura x86_64 para cargas de trabajo estándar"
+    variables:
+      - np_x86_shape
+      - np_x86_ocpus
+      - np_x86_memoria_gb
+      - np_x86_size
+
+  # ========================================================================
+  # GRUPO 6: NODE POOL ARM
+  # ========================================================================
+  - title: "Node Pool ARM (A1 Flex)"
+    description: "Nodos con arquitectura ARM64 para optimización de costos"
+    variables:
+      - np_arm_shape
+      - np_arm_ocpus
+      - np_arm_memoria_gb
+      - np_arm_size
+
+  # ========================================================================
+  # GRUPO 7: RED INTERNA KUBERNETES
+  # ========================================================================
+  - title: "Red Interna Kubernetes"
+    description: "CIDR para PODs y servicios de Kubernetes"
+    variables:
+      - pods_cidr
+      - services_cidr
+
+variables:
+  # ========================================================================
+  # TENANCY VARIABLES (Hidden)
+  # ========================================================================
+
+  tenancy_ocid:
+    type: string
+    required: true
+    description: "OCID del tenancy"
+    title: "Tenancy OCID"
+    visible: false
+
+  current_user_ocid:
+    type: string
+    required: true
+    description: "OCID del usuario"
+    title: "Usuario OCID"
+    visible: false
+
+  fingerprint:
+    type: string
+    required: true
+    description: "Fingerprint de API key"
+    title: "Fingerprint"
+    visible: false
+    sensitive: true
+
+  private_key_path:
+    type: string
+    required: true
+    description: "Ruta a clave privada"
+    title: "Ruta Clave Privada"
+    visible: false
+    sensitive: true
+
+  region:
+    type: string
+    required: true
+    description: "Región de OCI"
+    title: "Región"
+    visible: false
+
+  compartment_id:
+    type: string
+    required: true
+    description: "OCID del compartment"
+    title: "Compartment OCID"
+    visible: false
+
+  # ========================================================================
+  # INFORMACIÓN GENERAL
+  # ========================================================================
+
+  proyecto:
+    type: string
+    required: true
+    minLength: 1
+    maxLength: 20
+    default: "oke-multi"
+    title: "Nombre del Proyecto"
+    description: "Prefijo para todos los recursos creados"
+
+  ambiente:
+    type: enum
+    required: true
+    default: "produccion"
+    title: "Ambiente de Despliegue"
+    description: "Selecciona el ambiente destino"
+    enum:
+      - produccion
+      - staging
+      - desarrollo
+
+  propietario:
+    type: string
+    required: true
+    title: "Propietario del Proyecto"
+    description: "Email o nombre del propietario"
+    pattern: "^[a-zA-Z0-9._@-]+$"
+
+  equipo_responsable:
+    type: string
+    required: false
+    default: "DevOps"
+    title: "Equipo Responsable"
+    description: "Equipo encargado de la administración"
+
+  # ========================================================================
+  # CONFIGURACIÓN DE RED
+  # ========================================================================
+
+  vcn_cidr:
+    type: string
+    required: true
+    default: "10.0.0.0/16"
+    title: "CIDR de la VCN"
+    description: "Rango de direcciones IP de la Virtual Cloud Network"
+    pattern: "^([0-9]{1,3}\\.){3}[0-9]{1,3}/[0-9]{1,2}$"
+
+  subnet_api_cidr:
+    type: string
+    required: true
+    default: "10.0.1.0/24"
+    title: "CIDR Subred API"
+    description: "Rango para API endpoint del cluster Kubernetes"
+    pattern: "^([0-9]{1,3}\\.){3}[0-9]{1,3}/[0-9]{1,2}$"
+
+  subnet_lb_cidr:
+    type: string
+    required: true
+    default: "10.0.2.0/24"
+    title: "CIDR Subred Load Balancer"
+    description: "Rango para servicios de Load Balancer"
+    pattern: "^([0-9]{1,3}\\.){3}[0-9]{1,3}/[0-9]{1,2}$"
+
+  subnet_nodepool_cidr:
+    type: string
+    required: true
+    default: "10.0.3.0/23"
+    title: "CIDR Subred Node Pools"
+    description: "Rango para nodos de Kubernetes"
+    pattern: "^([0-9]{1,3}\\.){3}[0-9]{1,3}/[0-9]{1,2}$"
+
+  # ========================================================================
+  # KUBERNETES
+  # ========================================================================
+
+  kubernetes_version:
+    type: string
+    required: true
+    default: "v1.32.1"
+    title: "Versión de Kubernetes"
+    description: "Versión del cluster OKE"
+
+  cluster_name:
+    type: string
+    required: false
+    title: "Nombre del Cluster (Opcional)"
+    description: "Dejar vacío para usar nombre automático"
+
+  pods_cidr:
+    type: string
+    required: true
+    default: "10.244.0.0/16"
+    title: "CIDR de PODs"
+    description: "Rango de direcciones para PODs de Kubernetes (Flannel CNI)"
+    pattern: "^([0-9]{1,3}\\.){3}[0-9]{1,3}/[0-9]{1,2}$"
+
+  services_cidr:
+    type: string
+    required: true
+    default: "10.96.0.0/12"
+    title: "CIDR de Servicios"
+    description: "Rango de direcciones para servicios de Kubernetes"
+    pattern: "^([0-9]{1,3}\\.){3}[0-9]{1,3}/[0-9]{1,2}$"
+
+  # ========================================================================
+  # NODE POOL x86
+  # ========================================================================
+
+  np_x86_shape:
+    type: string
+    required: true
+    default: "VM.Standard.E4.Flex"
+    title: "Shape Node Pool x86"
+    description: "Tipo de instancia para nodos x86"
+    dependsOn:
+      compartmentId: compartment_id
+
+  np_x86_ocpus:
+    type: integer
+    required: true
+    minimum: 1
+    maximum: 128
+    default: 1
+    title: "OCPUs Node Pool x86"
+    description: "Número de OCPUs para instancias x86"
+
+  np_x86_memoria_gb:
+    type: integer
+    required: true
+    minimum: 1
+    maximum: 1024
+    default: 8
+    title: "Memoria (GB) Node Pool x86"
+    description: "Memoria en GB para instancias x86"
+
+  np_x86_size:
+    type: integer
+    required: true
+    minimum: 1
+    maximum: 1000
+    default: 1
+    title: "Número de Nodos x86"
+    description: "Cantidad de nodos en el pool x86"
+
+  # ========================================================================
+  # NODE POOL ARM
+  # ========================================================================
+
+  np_arm_shape:
+    type: string
+    required: true
+    default: "VM.Standard.A1.Flex"
+    title: "Shape Node Pool ARM"
+    description: "Tipo de instancia para nodos ARM (A1 Flex)"
+    dependsOn:
+      compartmentId: compartment_id
+
+  np_arm_ocpus:
+    type: integer
+    required: true
+    minimum: 1
+    maximum: 128
+    default: 1
+    title: "OCPUs Node Pool ARM"
+    description: "Número de OCPUs para instancias ARM"
+
+  np_arm_memoria_gb:
+    type: integer
+    required: true
+    minimum: 1
+    maximum: 1024
+    default: 6
+    title: "Memoria (GB) Node Pool ARM"
+    description: "Memoria en GB para instancias ARM"
+
+  np_arm_size:
+    type: integer
+    required: true
+    minimum: 1
+    maximum: 1000
+    default: 1
+    title: "Número de Nodos ARM"
+    description: "Cantidad de nodos en el pool ARM"
+
+outputs:
+  cluster_id:
+    title: "ID del Cluster Kubernetes"
+
+  node_pool_x86_id:
+    title: "ID del Node Pool x86"
+
+  node_pool_arm_id:
+    title: "ID del Node Pool ARM"
+
+  kubeconfig_cmd:
+    title: "Comando para obtener kubeconfig"
+
+  resumen_despliegue:
+    title: "Resumen de la Arquitectura Desplegada"
