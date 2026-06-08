@@ -1,0 +1,171 @@
+# ============================================================================
+# OCI Resource Manager - Schema for Event-Driven Architecture
+# ============================================================================
+
+title: "OCI Functions - Arquitectura Orientada a Eventos"
+
+description: |
+  Arquitectura serverless event-driven con:
+  - OCI Events Service para routing automático
+  - Múltiples funciones handlers
+  - Dead Letter Queue para manejo de errores
+  - Reintentos automáticos con backoff
+  - Notificaciones SNS integradas
+  - Costo total: USD 0.50/mes
+
+informational_items:
+  - name: "event_sources"
+    type: "html"
+    pre_content: |
+      <h3>Fuentes de Eventos Soportadas</h3>
+      <ul>
+        <li><strong>Object Storage:</strong> Subida/eliminación de archivos</li>
+        <li><strong>Database:</strong> Cambios en tablas y esquema</li>
+        <li><strong>Compute:</strong> Inicio/parada de instancias</li>
+        <li><strong>Network:</strong> Cambios en VCNs, subnets, NSGs</li>
+        <li><strong>Identity:</strong> Cambios en políticas, usuarios</li>
+      </ul>
+
+variables:
+  # Compartment
+  compartment_ocid:
+    type: oci:identity:compartment:id
+    required: true
+    title: "Compartment"
+
+  region:
+    type: oci:identity:region:name
+    required: true
+    title: "Región OCI"
+
+  # Application
+  app_name:
+    type: string
+    required: true
+    title: "Nombre de Aplicación"
+    default: "event-driven-app"
+    minLength: 3
+    maxLength: 30
+
+  environment:
+    type: enum
+    required: true
+    title: "Entorno"
+    default: "dev"
+    enum:
+      - "dev"
+      - "test"
+      - "prod"
+
+  # Event Configuration
+  event_sources:
+    type: enum
+    required: false
+    title: "Fuente de Eventos"
+    default: "object-storage"
+    enum:
+      - "object-storage"
+      - "database"
+      - "compute"
+      - "network"
+      - "identity"
+
+  # Functions
+  function_memory:
+    type: enum
+    required: false
+    title: "Memoria Función (MB)"
+    default: "256"
+    enum:
+      - "128"
+      - "256"
+      - "512"
+      - "1024"
+      - "2048"
+
+  function_timeout:
+    type: integer
+    required: false
+    title: "Timeout (segundos)"
+    default: 60
+    minimum: 1
+    maximum: 300
+
+  # Error Handling
+  enable_dlq:
+    type: boolean
+    required: false
+    title: "Habilitar Dead Letter Queue"
+    description: "Para capturar eventos que fallan"
+    default: true
+
+  max_retries:
+    type: integer
+    required: false
+    title: "Máximo de Reintentos"
+    default: 3
+    minimum: 1
+    maximum: 10
+
+  retry_delay_seconds:
+    type: integer
+    required: false
+    title: "Retardo de Reintento (seg)"
+    default: 5
+    minimum: 1
+    maximum: 300
+
+  # Processing
+  event_batch_size:
+    type: integer
+    required: false
+    title: "Tamaño de Lote"
+    default: 10
+    minimum: 1
+    maximum: 100
+
+  # Notifications
+  notification_email:
+    type: string
+    required: false
+    title: "Email para Notificaciones"
+    pattern: "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+
+  enable_notifications:
+    type: boolean
+    required: false
+    title: "Habilitar Notificaciones"
+    default: false
+
+  # Monitoring
+  enable_monitoring:
+    type: boolean
+    required: false
+    title: "Habilitar Monitoreo"
+    default: true
+
+  enable_detailed_logs:
+    type: boolean
+    required: false
+    title: "Logs Detallados"
+    default: true
+
+outputGroups:
+  - title: "Event Processing"
+    outputs:
+      - application_id
+      - object_storage_rule_id
+
+  - title: "Storage"
+    outputs:
+      - events_bucket_name
+      - processed_bucket_name
+
+  - title: "Error Handling"
+    outputs:
+      - dlq_queue_id
+      - view_dlq_messages
+
+  - title: "Notifications"
+    outputs:
+      - notification_topic_id
