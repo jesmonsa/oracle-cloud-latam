@@ -1,0 +1,249 @@
+# ╔══════════════════════════════════════════════════════════════════════════════╗
+# ║  PERSISTENT VOLUMES FSS - SCHEMA DE CONFIGURACIÓN                            ║
+# ╚══════════════════════════════════════════════════════════════════════════════╝
+
+openapi: 3.0.0
+
+info:
+  title: "OKE File Storage Service Configuration Schema"
+  version: "1.0.0"
+  description: |
+    Esquema de configuración para almacenamiento de archivos compartido (FSS)
+    en Oracle Kubernetes Engine con acceso ReadWriteMany.
+
+paths: {}
+components:
+  schemas:
+    
+    OKEFileStorageConfiguration:
+      type: object
+      required:
+        - tenancy_ocid
+        - current_user_ocid
+        - fingerprint
+        - private_key_path
+        - compartment_id
+      properties:
+        
+        tenancy_ocid:
+          type: string
+          description: OCID de la tenencia
+          pattern: "^ocid1\\.tenancy\\.oc1\\..+$"
+        
+        current_user_ocid:
+          type: string
+          description: OCID del usuario API
+          pattern: "^ocid1\\.user\\.oc1\\..+$"
+        
+        fingerprint:
+          type: string
+          description: Fingerprint de clave API
+          pattern: "^[a-f0-9]{2}(:[a-f0-9]{2}){15}$"
+        
+        private_key_path:
+          type: string
+          description: Ruta a clave privada API
+        
+        region:
+          type: string
+          description: Región de OCI
+          default: "sa-santiago-1"
+        
+        compartment_id:
+          type: string
+          description: OCID del compartimiento
+          pattern: "^ocid1\\.compartment\\.oc1\\..+$"
+        
+        cluster_name:
+          type: string
+          description: Nombre del clúster
+          default: "oke-file-storage"
+        
+        cluster_version:
+          type: string
+          description: Versión de Kubernetes
+          default: "1.29"
+        
+        vcn_cidr_block:
+          type: string
+          description: CIDR de la VCN
+          default: "10.3.0.0/16"
+        
+        k8s_subnet_cidr:
+          type: string
+          description: CIDR de subred Kubernetes
+          default: "10.3.1.0/24"
+        
+        worker_subnet_cidr:
+          type: string
+          description: CIDR de subred de nodos
+          default: "10.3.2.0/24"
+        
+        fss_subnet_cidr:
+          type: string
+          description: CIDR de subred FSS
+          default: "10.3.3.0/24"
+        
+        node_pool_size:
+          type: integer
+          description: Cantidad de nodos
+          default: 3
+          minimum: 1
+        
+        node_shape:
+          type: string
+          description: Forma de los nodos
+          default: "VM.Standard.E4.Flex"
+        
+        node_ocpus:
+          type: number
+          description: OCPUs por nodo
+          default: 2
+        
+        node_memory_gb:
+          type: number
+          description: Memoria en GB por nodo
+          default: 8
+        
+        fss_availability_domain:
+          type: string
+          description: AD del FSS (auto si vacío)
+          default: ""
+        
+        export_path:
+          type: string
+          description: Ruta de exportación NFS
+          default: "/exportfs"
+        
+        nfs_version:
+          type: string
+          description: Versión NFS
+          default: "NFSv3"
+          enum: ["NFSv3", "NFSv4.1"]
+        
+        enable_kerberos:
+          type: boolean
+          description: Habilitar Kerberos
+          default: false
+        
+        storage_class_name:
+          type: string
+          description: Nombre de StorageClass
+          default: "oci-fss"
+        
+        fss_provisioner_version:
+          type: string
+          description: Versión del provisioner
+          default: "1.3.0"
+        
+        fss_initial_size_gb:
+          type: integer
+          description: Tamaño inicial en GB
+          default: 100
+          minimum: 100
+          maximum: 8388608
+        
+        enable_auto_expansion:
+          type: boolean
+          description: Auto-expansion habilitada
+          default: true
+        
+        auto_expansion_size_gb:
+          type: integer
+          description: Tamaño de incremento
+          default: 50
+          minimum: 50
+          maximum: 1024
+        
+        max_fss_size_gb:
+          type: integer
+          description: Tamaño máximo
+          default: 500
+          minimum: 100
+          maximum: 8388608
+        
+        enable_network_security_group:
+          type: boolean
+          description: Crear NSG
+          default: true
+        
+        nfs_port:
+          type: integer
+          description: Puerto NFS
+          default: 2049
+          minimum: 1024
+          maximum: 65535
+        
+        mountd_port:
+          type: integer
+          description: Puerto mountd
+          default: 111
+          minimum: 1024
+          maximum: 65535
+        
+        restricted_client_cidr_list:
+          type: array
+          items:
+            type: string
+          description: CIDRs permitidos
+          default: []
+        
+        enable_fss_snapshots:
+          type: boolean
+          description: Snapshots habilitados
+          default: true
+        
+        snapshot_policy:
+          type: string
+          description: Política de snapshots
+          default: "daily"
+          enum: ["hourly", "daily", "weekly"]
+        
+        retention_days:
+          type: integer
+          description: Retención en días
+          default: 30
+          minimum: 7
+          maximum: 365
+        
+        environment:
+          type: string
+          description: Ambiente
+          default: "prod"
+          enum: ["dev", "staging", "prod"]
+        
+        project_name:
+          type: string
+          description: Nombre del proyecto
+          default: "oke-file-storage"
+        
+        tags:
+          type: object
+          description: Etiquetas
+          additionalProperties:
+            type: string
+        
+        enable_monitoring:
+          type: boolean
+          description: Habilitar monitoreo
+          default: true
+        
+        enable_logging:
+          type: boolean
+          description: Habilitar logging
+          default: true
+        
+        iam_enabled:
+          type: boolean
+          description: IAM habilitado
+          default: true
+        
+        read_only_export:
+          type: boolean
+          description: Exportación solo lectura
+          default: false
+        
+        allow_anonymous_access:
+          type: boolean
+          description: Acceso anónimo
+          default: false
