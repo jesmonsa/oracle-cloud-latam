@@ -1,0 +1,69 @@
+title: OCI AI Vision Service
+description: "Servicio de análisis inteligente de imágenes sin servidor"
+schemaVersion: 1.1.0
+version: 1.0.0
+
+informationItems:
+  - name: Project Name
+    type: string
+    required: true
+    default: "vision-platform"
+
+  - name: Environment
+    type: enum
+    enum:
+      - dev
+      - staging
+      - prod
+    default: "dev"
+
+  - name: Region
+    type: oci:identity:region
+    required: true
+    default: "us-phoenix-1"
+
+  - name: Compartment
+    type: oci:identity:compartment
+    required: true
+
+  - name: Enable Image Classification
+    type: boolean
+    default: true
+
+  - name: Enable Object Detection
+    type: boolean
+    default: true
+
+  - name: Enable Document Analysis
+    type: boolean
+    default: true
+
+  - name: API Gateway Enabled
+    type: boolean
+    default: true
+
+  - name: Input Bucket Name
+    type: string
+    required: true
+    default: "vision-input"
+
+  - name: Results Bucket Name
+    type: string
+    required: true
+    default: "vision-results"
+
+  - name: Rate Limit (per minute)
+    type: integer
+    minimum: 10
+    maximum: 10000
+    default: 1000
+
+outputGroups:
+  - title: "Vision Service"
+    outputs:
+      - input_bucket_uri
+      - results_bucket_uri
+
+  - title: "Object Storage"
+    outputs:
+      - object_storage_namespace
