@@ -1,0 +1,377 @@
+---
+# OCI Terraform Schema - Autonomous Database (ATP/ADW)
+# Versión: 1.0
+# Descripción: Esquema de configuración para Autonomous Database en OCI
+
+name: "Autonomous Database (ATP/ADW)"
+version: "1.0.0"
+description: "Referencia arquitectónica para Oracle Autonomous Database en OCI LATAM"
+provider: "OCI"
+category: "Database"
+tags:
+  - "database"
+  - "autonomous"
+  - "oltp"
+  - "data-warehouse"
+  - "enterprise"
+
+# =============================================================================
+# CONFIGURACIÓN MÍNIMA REQUERIDA
+# =============================================================================
+minimum_configuration:
+  required_variables:
+    - compartment_id
+    - region
+    - db_name
+    - db_password
+    - db_workload
+    - vcn_id
+    - subnet_id
+  estimated_setup_time: "15 minutes"
+  estimated_apply_time: "5-10 minutes"
+
+# =============================================================================
+# SECURITY REQUIREMENTS
+# =============================================================================
+security:
+  network:
+    - type: "VCN"
+      requirement: "Private VCN para Private Endpoint"
+    - type: "Subnet"
+      requirement: "Subnet privada (sin Internet Gateway)"
+    - type: "NSG"
+      requirement: "Network Security Group para puerto 1522"
+
+  authentication:
+    - type: "Oracle Wallet"
+      requirement: "Wallet requerido para todas las conexiones"
+    - type: "TLS"
+      requirement: "TLS 1.2+ obligatorio para conexiones"
+
+  encryption:
+    - type: "At Rest"
+      standard: "Oracle TDE (Transparent Data Encryption)"
+      optional_kms: "OCI KMS para keys externas"
+    - type: "In Transit"
+      standard: "TLS 1.2+ for all connections"
+
+  iam:
+    - resource: "oci_database_autonomous_database"
+      required_policy: "database.autonomousDatabase.manage"
+    - resource: "oci_core_network_security_group"
+      required_policy: "network.security-groups.manage"
+
+# =============================================================================
+# VARIABLES CONFIGURATION
+# =============================================================================
+variables:
+  region:
+    type: "string"
+    description: "OCI Region"
+    example: "sa-saopaulo-1"
+    allowed_values: ["sa-saopaulo-1", "la-mexico-1", "ca-montreal-1"]
+    sensitive: false
+
+  compartment_id:
+    type: "string"
+    description: "Compartment OCID"
+    example: "ocid1.compartment.oc1..."
+    sensitive: false
+    required: true
+
+  db_name:
+    type: "string"
+    description: "Database name (max 8 chars, no dashes)"
+    example: "atpdb"
+    pattern: "^[a-zA-Z][a-zA-Z0-9]{0,7}$"
+    sensitive: false
+
+  db_password:
+    type: "string"
+    description: "Admin password (min 12 chars, uppercase, lowercase, number, special)"
+    example: "ComplexPassword123!@#"
+    pattern: "^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[!@#$%^&*()_+=\\-\\[\\]{};:',.<>?/]).{12,}$"
+    sensitive: true
+    required: true
+
+  db_workload:
+    type: "string"
+    description: "Workload type: OLTP or DW"
+    example: "OLTP"
+    allowed_values: ["OLTP", "DW"]
+    default: "OLTP"
+    pricing_impact: "DW es más caro que OLTP"
+
+  ocpu_count:
+    type: "number"
+    description: "Number of OCPUs"
+    example: 2
+    minimum: 1
+    maximum: 128
+    recommended: [2, 4, 8, 16]
+    pricing_impact: "Linear cost increase"
+
+  storage_gb:
+    type: "number"
+    description: "Storage in GB"
+    example: 20
+    minimum: 20
+    maximum: 65536
+    default: 20
+    pricing_impact: "USD 0.02/GB/month (OLTP) or USD 0.01/GB/month (DW)"
+
+  vcn_id:
+    type: "string"
+    description: "VCN OCID"
+    example: "ocid1.vcn.oc1..."
+    sensitive: false
+    required: true
+
+  subnet_id:
+    type: "string"
+    description: "Private Subnet OCID (must not have IGW)"
+    example: "ocid1.subnet.oc1..."
+    sensitive: false
+    required: true
+
+  enable_backup:
+    type: "bool"
+    description: "Enable automatic backups"
+    example: true
+    default: true
+    recommended: true
+
+  backup_retention_days:
+    type: "number"
+    description: "Backup retention period in days"
+    example: 30
+    minimum: 1
+    maximum: 35
+    default: 30
+
+  enable_monitoring:
+    type: "bool"
+    description: "Enable OCI Monitoring and Alarms"
+    example: true
+    default: true
+    recommended: true
+
+  enable_audit_logging:
+    type: "bool"
+    description: "Enable OCI Audit Logging"
+    example: true
+    default: true
+    recommended: true
+
+  database_edition:
+    type: "string"
+    description: "Database Edition"
+    allowed_values: ["ENTERPRISE_EDITION", "STANDARD_EDITION"]
+    default: "ENTERPRISE_EDITION"
+    pricing_impact: "ENTERPRISE es más caro"
+
+# =============================================================================
+# OUTPUTS SPECIFICATION
+# =============================================================================
+outputs:
+  autonomous_db_id:
+    type: "string"
+    description: "Database OCID"
+    sensitive: false
+
+  autonomous_db_hostname:
+    type: "string"
+    description: "Private Endpoint hostname for connections"
+    sensitive: false
+
+  autonomous_db_admin_user:
+    type: "string"
+    description: "Database admin user"
+    value: "ADMIN"
+
+  wallet_location:
+    type: "string"
+    description: "Local wallet file path"
+    sensitive: false
+
+  jdbc_connection_string:
+    type: "string"
+    description: "JDBC connection string for Java applications"
+    sensitive: false
+
+  connection_info_summary:
+    type: "map"
+    description: "Summary of all connection information"
+    sensitive: false
+
+# =============================================================================
+# RESOURCE MAPPING
+# =============================================================================
+resources_created:
+  - type: "oci_database_autonomous_database"
+    name: "Autonomous Database Instance"
+    pricing_model: "pay-per-use (OCPUs + Storage)"
+    depends_on:
+      - vcn
+      - subnet
+
+  - type: "oci_core_network_security_group"
+    name: "Database NSG"
+    pricing_model: "free"
+    depends_on:
+      - vcn
+
+  - type: "oci_core_network_security_group_security_rule"
+    name: "NSG Inbound Rule (port 1522)"
+    pricing_model: "free"
+    depends_on:
+      - nsg
+
+  - type: "oci_database_autonomous_database_wallet"
+    name: "Oracle Wallet"
+    pricing_model: "free"
+    depends_on:
+      - autonomous_database
+
+  - type: "oci_monitoring_alarm"
+    name: "Monitoring Alarms (CPU, Storage, Connections)"
+    pricing_model: "free for first 5 alarms"
+    count: 3
+    depends_on:
+      - autonomous_database
+
+  - type: "oci_logging_log_group"
+    name: "Audit Log Group"
+    pricing_model: "pay-per-GB ingested"
+    depends_on:
+      - compartment
+
+  - type: "oci_notifications_notification_topic"
+    name: "SNS Topic for Alerts"
+    pricing_model: "free"
+    optional: true
+    depends_on:
+      - compartment
+
+# =============================================================================
+# COST ESTIMATION
+# =============================================================================
+cost_estimation:
+  currency: "USD"
+  billing_model: "Pay-per-Use"
+
+  components:
+    - name: "OCPU"
+      oltp_hourly: 0.70
+      dw_hourly: 1.00
+      monthly_hours: 730
+      example_2ocpu_oltp: "2 × $0.70 × 730 = $1,022/mes"
+      example_4ocpu_dw: "4 × $1.00 × 730 = $2,920/mes"
+
+    - name: "Storage"
+      oltp_per_gb_monthly: 0.02
+      dw_per_gb_monthly: 0.01
+      example_20gb_oltp: "20 × $0.02 = $0.40/mes"
+      example_100gb_dw: "100 × $0.01 = $1.00/mes"
+
+    - name: "Backup"
+      cost: "included"
+      storage_limit: "35 days retention"
+
+    - name: "Data Transfer Out"
+      cost: "varies by region"
+      example: "$0.01-0.05 per GB depending on destination"
+
+  total_monthly_estimate:
+    minimum: "$1,022.40"  # 2 OCPU ATP + 20 GB
+    recommended: "$2,000-3,000"
+    maximum: "varies (up to 128 OCPU × $730/month)"
+
+  cost_optimization_tips:
+    - "Usar Pause DB para desarrollo (30 min idle)"
+    - "Reserved Capacity: hasta 40% descuento"
+    - "Always Free Tier: 1 ATP + 1 ADW gratis"
+    - "Usar OLTP en lugar de DW si no necesita analytics"
+
+# =============================================================================
+# DEPLOYMENT CHECKLIST
+# =============================================================================
+deployment_checklist:
+  pre_deployment:
+    - "Verificar OCI account activa en región LATAM"
+    - "VCN y subnet privada creadas"
+    - "IAM policies configuradas"
+    - "Clave SSH para OCI CLI generada"
+    - "terraform.tfvars completado con valores reales"
+
+  deployment:
+    - "terraform init"
+    - "terraform validate"
+    - "terraform plan"
+    - "terraform apply"
+
+  post_deployment:
+    - "Descargar wallet desde S3/OCI"
+    - "Extraer wallet.zip a location segura"
+    - "Configurar permisos wallet (chmod 600)"
+    - "Probar conexión con sqlplus o JDBC"
+    - "Habilitar OCI Monitoring dashboards"
+    - "Verificar backup policy"
+
+# =============================================================================
+# KNOWN LIMITATIONS
+# =============================================================================
+limitations:
+  - description: "Max 8 caracteres en nombre de BD"
+    workaround: "Usar naming convention corto"
+
+  - description: "Wallet debe rotarse cada 30 días"
+    workaround: "Configurar rotación automática en OCI"
+
+  - description: "No se puede cambiar workload type después de crear"
+    workaround: "Crear nueva BD y migrar datos"
+
+  - description: "Private Endpoint no se puede cambiar a público"
+    workaround: "Crear nueva BD con configuración pública"
+
+# =============================================================================
+# TROUBLESHOOTING GUIDE
+# =============================================================================
+troubleshooting:
+  - error: "ORA-12514: TNS:listener not found"
+    cause: "Subnet no tiene ruta a Private Endpoint"
+    solution: "Verificar route table y Security List rules"
+
+  - error: "ORA-28759: certificate failure"
+    cause: "Wallet expirado o inválido"
+    solution: "Descargar nuevo wallet desde OCI Console"
+
+  - error: "OCI-20000: insufficient permissions"
+    cause: "IAM policy no permite operación"
+    solution: "Verificar IAM policy con compartment admin"
+
+  - error: "Terraform apply timeout"
+    cause: "BD toma más de 10 min crear (normal)"
+    solution: "Esperar y ejecutar 'terraform apply' nuevamente"
+
+# =============================================================================
+# REFERENCES & DOCUMENTATION
+# =============================================================================
+references:
+  - title: "Oracle Autonomous Database Documentation"
+    url: "https://docs.oracle.com/en-us/iaas/Content/Database/Concepts/adboverview.htm"
+
+  - title: "OCI Terraform Provider - Database"
+    url: "https://registry.terraform.io/providers/oracle/oci/latest/docs/resources/database_autonomous_database"
+
+  - title: "Autonomous Database SQL Developer"
+    url: "https://www.oracle.com/tools/downloads/sqldev-downloads.html"
+
+  - title: "OCI Architecture Best Practices"
+    url: "https://docs.oracle.com/en/solutions/design-a-secure-cloud-infrastructure/"
+
+version_history:
+  - version: "1.0.0"
+    date: "2026-04-12"
+    author: "OCI LATAM Team"
+    changes: "Initial release"
