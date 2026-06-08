@@ -1,0 +1,40 @@
+# ╔══════════════════════════════════════════════════════════════════════════════╗
+# ║  terraform.tfvars — Track OKE Lección 02: Node Pools Flex                  ║
+# ╚══════════════════════════════════════════════════════════════════════════════╝
+
+tenancy_ocid      = "<tu_tenancy_ocid>"
+current_user_ocid = "<tu_user_ocid>"
+fingerprint       = "<tu_fingerprint>"
+private_key_path  = "~/.oci/key.pem"
+region            = "us-ashburn-1"
+
+compartment_ocid = "<tu_compartment_ocid>"
+proyecto         = "oke-flex"
+ambiente         = "desarrollo"
+propietario      = "<tu_email>"
+
+# ─── Red ──────────────────────────────────────────────────────────────────────
+vcn_cidr             = "10.0.0.0/16"
+subnet_api_cidr      = "10.0.0.0/28"
+subnet_lb_cidr       = "10.0.1.0/24"
+subnet_nodepool_cidr = "10.0.10.0/24"
+pods_cidr            = "10.244.0.0/16"
+services_cidr        = "10.96.0.0/16"
+
+# ─── Kubernetes ───────────────────────────────────────────────────────────────
+k8s_version = "v1.32.1"
+
+# ─── Node Pool 1: E4 Flex (x86) ──────────────────────────────────────────────
+np_x86_size       = 1
+np_x86_shape      = "VM.Standard.E4.Flex"
+np_x86_ocpus      = 1
+np_x86_memoria_gb = 8
+
+# ─── Node Pool 2: A1 Flex (ARM / Ampere) ───────────────────────────────────
+np_arm_size       = 1
+np_arm_shape      = "VM.Standard.A1.Flex"
+np_arm_ocpus      = 1
+np_arm_memoria_gb = 6
+
+# ─── SSH ──────────────────────────────────────────────────────────────────────
+ssh_public_key = "<tu_ssh_public_key>"
