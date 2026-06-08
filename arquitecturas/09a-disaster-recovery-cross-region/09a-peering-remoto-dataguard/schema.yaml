@@ -1,0 +1,266 @@
+title: "09a - Interconexión de Redes: Remote VCN Peering con DataGuard"
+description: "Despliega Alta Disponibilidad y Disaster Recovery multi-región. Combina Remote Peering Connections (RPC) con Oracle DataGuard para aprovisionar y sincronizar una Base de Datos secundaria en una región geográficamente distante."
+schemaVersion: 1.1.0
+version: "20250101"
+locale: "es"
+
+logoUrl: "https://raw.githubusercontent.com/jesmonsa/oracle-cloud-latam/main/docs/logo.png"
+
+variableGroups:
+  - title: "Información del Tenancy"
+    visible: true
+    variables:
+      - tenancy_ocid
+      - region
+      - region2
+      - current_user_ocid
+
+  - title: "Configuración General"
+    visible: true
+    variables:
+      - compartment_ocid
+      - proyecto
+      - ambiente
+      - propietario
+
+  - title: "Configuración de Red Hub (VCN Región Principal)"
+    visible: true
+    variables:
+      - vcn_cidr
+      - subnet_publica_cidr
+      - subnet_privada_cidr
+      - subnet_db_cidr
+
+  - title: "Configuración de Red Spoke (VCN Región Secundaria)"
+    visible: true
+    variables:
+      - vcn_spoke_cidr
+      - subnet_backend_cidr
+
+  - title: "Configuración de Base de Datos y Data Guard"
+    visible: true
+    variables:
+      - shape_dbsystem
+      - ocpus_dbsystem
+      - db_password
+      - db_name
+      - db_timezone
+
+  - title: "Configuración de Cómputo Web"
+    visible: true
+    variables:
+      - ssh_public_key
+      - shape_webserver
+      - ocpus_webserver
+      - memoria_webserver_gb
+      - imagen_os
+
+  - title: "Seguridad y Accesos"
+    visible: true
+    variables:
+      - ssh_cidr_permitido
+      - habilitar_nsg
+
+  - title: "Opciones Avanzadas"
+    visible: true
+    variables:
+      - habilitar_baseline_seguridad
+
+variables:
+  tenancy_ocid:
+    type: string
+    title: "Tenancy OCID"
+    required: true
+
+  region:
+    type: region
+    default: "us-ashburn-1"
+    title: "Región 1 (Principal)"
+    description: "La región donde se desplegará el Webserver, Load Balancer y la DB Primaria"
+    required: true
+
+  region2:
+    type: region
+    title: "Región 2 (Secundaria para DR)"
+    description: "La región destino para el DB System Standby vía Data Guard"
+    default: "us-phoenix-1"
+    required: true
+
+  current_user_ocid:
+    type: string
+    title: "User OCID"
+    visible: false
+
+  compartment_ocid:
+    type: oci:identity:compartment:id
+    title: "Compartment de Destino"
+    description: "Compartment donde se crearán todos los recursos de esta arquitectura"
+    required: true
+
+  proyecto:
+    type: string
+    title: "Nombre del Proyecto"
+    description: "Prefijo usado en el nombre de todos los recursos. Sin espacios, máx 15 caracteres"
+    default: "miproyecto"
+    required: true
+    pattern: "^[a-z][a-z0-9-]{1,14}$"
+
+  ambiente:
+    type: enum
+    title: "Ambiente de Despliegue"
+    description: "Ambiente donde se despliega esta arquitectura"
+    enum:
+      - "produccion"
+      - "staging"
+      - "desarrollo"
+      - "demo"
+    default: "desarrollo"
+    required: true
+
+  propietario:
+    type: string
+    title: "Propietario"
+    description: "E-mail o nombre del propietario de los recursos"
+    default: "admin"
+    required: true
+
+  vcn_cidr:
+    type: string
+    title: "CIDR de la VCN Hub (Región 1)"
+    description: "Espacio de direcciones para la Red Virtual Principal"
+    default: "10.0.0.0/16"
+    required: true
+
+  vcn_spoke_cidr:
+    type: string
+    title: "CIDR de la VCN Spoke (Región 2)"
+    description: "Espacio de direcciones para la Red Virtual Secundaria. ¡No se debe solapar!"
+    default: "10.1.0.0/16"
+    required: true
+
+  subnet_publica_cidr:
+    type: string
+    title: "CIDR Subred Pública"
+    description: "Subred para el Load Balancer"
+    default: "10.0.1.0/24"
+    required: true
+
+  subnet_privada_cidr:
+    type: string
+    title: "CIDR Subred Privada"
+    description: "Subred para Servidores Web"
+    default: "10.0.2.0/24"
+    required: true
+
+  subnet_db_cidr:
+    type: string
+    title: "CIDR Subred Base de Datos"
+    description: "Subred en Región 1 dedicada exclusivamente al servidor DB Primario"
+    default: "10.0.3.0/24"
+    required: true
+
+  subnet_backend_cidr:
+    type: string
+    title: "CIDR Subred en VCN Spoke"
+    description: "Subred en Región 2 dedicada exclusivamente al servidor DB Standby"
+    default: "10.1.1.0/24"
+    required: true
+
+  ssh_public_key:
+    type: string
+    title: "Llave Pública SSH"
+    description: "Pega tu llave pública SSH."
+    required: true
+
+  shape_dbsystem:
+    type: oci:core:instanceshape:name
+    title: "Shape del DB System"
+    description: "Formato de capacidad para AMBOS nodos de Base de Datos"
+    default: "VM.Standard.E4.Flex"
+    required: true
+    dependsOn:
+      compartmentId: compartment_ocid
+
+  ocpus_dbsystem:
+    type: number
+    title: "Cantidad de OCPUs para DB System"
+    description: "Número de OCPUs exclusivas para CADA SERVIDOR (Primario y Standby)"
+    default: 1
+    required: true
+
+  db_password:
+    type: password
+    title: "Contraseña SYS Base de Datos"
+    description: "Contraseña del usuario SYS. Mínimo 9 a 30 caracteres. Por lo menos dos en mayúsculas, dos minúsculas, dos números y dos caracteres especiales."
+    required: true
+
+  db_name:
+    type: string
+    title: "Nombre Base de Datos (DB_NAME)"
+    description: "Máximo 8 caracteres alfanuméricos"
+    default: "PRODDB"
+    required: true
+    pattern: "^[a-zA-Z0-9]{1,8}$"
+
+  db_timezone:
+    type: enum
+    title: "Zona Horaria de la BD"
+    description: "Zona horaria base configurada a nivel OS / Base de Datos"
+    enum:
+      - "America/Bogota"
+      - "America/Mexico_City"
+      - "America/Argentina/Buenos_Aires"
+      - "America/Santiago"
+      - "America/Sao_Paulo"
+    default: "America/Bogota"
+    required: true
+
+  shape_webserver:
+    type: oci:core:instanceshape:name
+    title: "Shape del Servidor Web"
+    description: "VM.Standard.E4.Flex es la opción más costo-eficiente para LATAM"
+    default: "VM.Standard.E4.Flex"
+    required: true
+    dependsOn:
+      compartmentId: compartment_ocid
+
+  ocpus_webserver:
+    type: number
+    title: "Cantidad de OCPUs (por VM Web)"
+    description: "Número de OCPUs para cada servidor Frontend"
+    default: 1
+    required: true
+
+  memoria_webserver_gb:
+    type: number
+    title: "Memoria RAM (GB) (por VM)"
+    description: "Cantidad de memoria RAM en GB para servidores Frontend"
+    default: 8
+    required: true
+
+  imagen_os:
+    type: string
+    title: "OCID de la Imagen OS Web (Opcional)"
+    description: "Si se deja vacía asume Oracle Linux 8 en la región 1"
+    default: ""
+    required: false
+
+  ssh_cidr_permitido:
+    type: string
+    title: "CIDR Permitido para Bastion SSH"
+    description: "⚠️ Restricción para solicitar túneles a OCI Bastion."
+    default: "0.0.0.0/0"
+    required: true
+
+  habilitar_nsg:
+    type: boolean
+    title: "Usar Network Security Groups (NSG)"
+    description: "✅ Preconfigura reglas de seguridad lógicas entre capas"
+    default: true
+
+  habilitar_baseline_seguridad:
+    type: boolean
+    title: "Activar Baseline de Seguridad OCI"
+    description: "Activa Cloud Guard, Data Safe y auditoría básica. Recomendado para producción"
+    default: false
+
