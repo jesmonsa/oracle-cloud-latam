@@ -1,0 +1,12 @@
+---
+name: "OCI Data Integration"
+version: "1.0.0"
+description: "ETL/ELT service for data pipelines"
+provider: "OCI"
+category: "Data Integration"
+tags: ["etl", "elt", "pipelines", "data-integration"]
+
+cost_estimation:
+  per_task_executed: "USD 0.006"
+  example_100_tasks_daily: "USD 18/month"
+  infrastructure: "Variable (OCI Compute)"

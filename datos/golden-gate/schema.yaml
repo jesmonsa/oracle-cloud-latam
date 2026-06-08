@@ -1,0 +1,25 @@
+---
+name: "OCI GoldenGate"
+version: "1.0.0"
+description: "Real-time data replication and CDC"
+provider: "OCI"
+category: "Data Replication"
+tags: ["replication", "cdc", "goldengate", "streaming"]
+
+supported_databases:
+  - "Oracle Database"
+  - "MySQL"
+  - "PostgreSQL"
+  - "SQL Server"
+  - "MongoDB"
+
+use_cases:
+  - "Disaster Recovery"
+  - "Real-time Analytics"
+  - "Database Migration"
+  - "Multi-directional Replication"
+
+cost_estimation:
+  vm_hourly: "USD 0.15"
+  storage_per_gb_monthly: "USD 0.02"
+  monthly_estimate: "USD 150-300"
