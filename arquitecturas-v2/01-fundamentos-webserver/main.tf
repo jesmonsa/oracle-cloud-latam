@@ -98,7 +98,7 @@ resource "oci_core_security_list" "sl_vacia" {
   freeform_tags  = local.tags_comunes
 }
 
-# ─── Subnet Pública ──────────────────────────────────────────────────────────
+# ─── Subnet Pública ────────────────────────────────────────────────────────
 resource "oci_core_subnet" "publica" {
   compartment_id = var.compartment_ocid
   vcn_id         = module.red.vcn_id

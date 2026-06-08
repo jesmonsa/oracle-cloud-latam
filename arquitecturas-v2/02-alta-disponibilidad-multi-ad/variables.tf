@@ -92,7 +92,7 @@ variable "subnet_publica_ad2_cidr" {
   default     = "10.0.2.0/24"
 }
 
-# ─── Cómputo ────────────────────────────────────────────────────────────────
+# ─── Cómputo ──────────────────────────────────────────────────────────────────
 variable "shape_webserver" {
   description = "Shape Flex para instancias. Compatible: VM.Standard.E4.Flex, VM.Standard.E5.Flex, VM.Standard.A1.Flex (ARM), VM.Optimized3.Flex, VM.Standard3.Flex"
   type        = string
