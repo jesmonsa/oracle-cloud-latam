@@ -1,0 +1,19 @@
+---
+name: "MySQL HeatWave"
+version: "1.0.0"
+description: "MySQL HeatWave con análisis en tiempo real"
+provider: "OCI"
+category: "Database"
+tags: ["database", "mysql", "analytics", "heatwave", "enterprise"]
+
+minimum_configuration:
+  required_variables: ["compartment_id", "cluster_name", "admin_password", "vcn_id", "subnet_id"]
+  estimated_setup_time: "20 minutes"
+  estimated_apply_time: "10-15 minutes"
+
+cost_estimation:
+  primary_node_hourly: 0.36
+  secondary_node_hourly: 0.36
+  heatwave_node_hourly: 1.00
+  storage_per_gb_daily: 0.002
+  monthly_estimate: "2,254-3,500 USD"
