@@ -1,0 +1,91 @@
+title: OCI GPU Cluster - ML Training
+description: "Cluster distribuido para entrenamiento de modelos ML con GPUs"
+schemaVersion: 1.1.0
+version: 1.0.0
+
+informationItems:
+  - name: Project Name
+    type: string
+    required: true
+    default: "gpu-ml-cluster"
+
+  - name: Environment
+    type: enum
+    enum:
+      - dev
+      - staging
+      - prod
+    default: "prod"
+
+  - name: Region
+    type: oci:identity:region
+    required: true
+    default: "us-phoenix-1"
+
+  - name: Compartment
+    type: oci:identity:compartment
+    required: true
+
+  - name: Cluster Name
+    type: string
+    required: true
+    default: "ml-training-cluster"
+
+  - name: Number of GPU Nodes
+    type: integer
+    minimum: 1
+    maximum: 32
+    default: 4
+
+  - name: GPU Shape
+    type: enum
+    enum:
+      - "VM.GPU.A10.1"
+      - "VM.GPU.A10.2"
+      - "VM.GPU.A100.1"
+      - "VM.GPU.A100.2"
+      - "VM.GPU.V100.1"
+      - "BM.GPU.A100"
+    default: "VM.GPU.A100.2"
+
+  - name: Master Node OCPUs
+    type: integer
+    minimum: 4
+    maximum: 64
+    default: 8
+
+  - name: FSS Size (GB)
+    type: integer
+    minimum: 100
+    maximum: 8192
+    default: 1000
+
+  - name: Enable RDMA
+    type: boolean
+    default: true
+    description: "Habilitar networking RDMA de alto rendimiento"
+
+  - name: Enable SLURM
+    type: boolean
+    default: true
+    description: "Instalar SLURM para job scheduling"
+
+  - name: Enable Monitoring
+    type: boolean
+    default: true
+    description: "Habilitar Prometheus + Grafana"
+
+outputGroups:
+  - title: "Cluster Configuration"
+    outputs:
+      - cluster_name
+      - num_gpu_nodes
+      - gpu_shape
+
+  - title: "Storage"
+    outputs:
+      - filesystem_size_gb
+
+  - title: "Monitoring"
+    outputs:
+      - monitoring_enabled
